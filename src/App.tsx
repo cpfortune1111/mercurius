@@ -39,6 +39,9 @@ const copy = {
     continueSub: "回到未完成的棋局",
     records: "個人紀錄",
     recordsSub: "查看完成數與最佳時間",
+    settings: "設定",
+    appearance: "顯示主題",
+    language: "語言",
     daily: "每日挑戰",
     missions: "今日任務",
     phase2: "第二階段",
@@ -76,6 +79,9 @@ const copy = {
     continueSub: "Return to your unfinished puzzle",
     records: "Records",
     recordsSub: "Completions and personal bests",
+    settings: "Settings",
+    appearance: "Appearance",
+    language: "Language",
     daily: "Daily Challenge",
     missions: "Today's Missions",
     phase2: "Phase 2",
@@ -121,12 +127,9 @@ function formatTime(seconds: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-function Logo({ compact = false }: { compact?: boolean }) {
+function GameLogo() {
   return (
-    <div className={`brand ${compact ? "brand--compact" : ""}`}>
-      <span className="brand__mark" aria-hidden="true">☿</span>
-      <span>Mercurius</span>
-    </div>
+    <img className="game-logo" src="/mercurius-sudoku-logo.png" alt="Mercurius Sudoku" />
   );
 }
 
@@ -141,6 +144,7 @@ export function App() {
   );
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const text = copy[locale];
 
   useEffect(() => localStorage.setItem(storage.hints, JSON.stringify(hints)), [hints]);
@@ -241,9 +245,15 @@ export function App() {
 
   const header = (
     <header className="topbar">
-      <button className="brand-button" type="button" onClick={goHome} aria-label="Mercurius home"><Logo compact /></button>
+      <button className="topbar__settings" type="button" onClick={() => setSettingsOpen(true)} aria-label={text.settings} title={text.settings}>
+        <img src="/icon-settings.png" alt="" />
+      </button>
+      <a className="studio-link" href="https://tsukinoaiplus.com" target="_blank" rel="noreferrer" aria-label="Tsukino Ai Plus website">
+        <img src="/tsukinoaiplus-logo.png" alt="Tsukino Ai Plus" />
+      </a>
       <div className="topbar__actions">
         <span className="hint-balance" title="Hint balance">✦ {hints}</span>
+        <button className="icon-button records-button" type="button" onClick={() => setScreen("records")} aria-label={text.records} title={text.records}><img src="/icon-records.png" alt="" /></button>
         <button className="icon-button theme-button" type="button" onClick={cycleTheme} aria-label="Change theme" title="Change theme">◐</button>
         <button className="language-button" type="button" onClick={() => setLocale(locale === "zh-Hant" ? "en" : "zh-Hant")}>{locale === "zh-Hant" ? "EN" : "繁中"}</button>
       </div>
@@ -258,16 +268,15 @@ export function App() {
       {screen === "home" && (
         <section className="home-screen">
           <aside className="side-rail" aria-label="Upcoming features">
-            <button className="rail-card" type="button" disabled><span>◒</span><strong>{text.daily}</strong><small>{text.phase2}</small></button>
             <button className="rail-card" type="button" disabled><span>◇</span><strong>{text.missions}</strong><small>{text.phase2}</small></button>
           </aside>
           <div className="home-hero">
-            <Logo />
+            <GameLogo />
             <p className="tagline">{text.tagline}</p>
             <div className="main-actions">
+              <button className="action-card action-card--daily" type="button" disabled><span className="action-icon">◒</span><span><strong>{text.daily}</strong><small>{text.phase2}</small></span><b>›</b></button>
               <button className="action-card action-card--primary" type="button" onClick={() => setScreen("difficulty")}><span className="action-icon">＋</span><span><strong>{text.newGame}</strong><small>{text.newGameSub}</small></span><b>›</b></button>
               <button className="action-card" type="button" disabled={!activeGame || activeGame.state.completed} onClick={() => setScreen("game")}><span className="action-icon">▶</span><span><strong>{text.continue}</strong><small>{text.continueSub}</small></span><b>›</b></button>
-              <button className="action-card" type="button" onClick={() => setScreen("records")}><span className="action-icon">⌁</span><span><strong>{text.records}</strong><small>{text.recordsSub}</small></span><b>›</b></button>
             </div>
           </div>
         </section>
@@ -343,6 +352,25 @@ export function App() {
           <h2>{text.bestTimes}</h2>
           <div className="record-list">{difficulties.map((difficulty) => <div key={difficulty}><span>{text[difficulty]}</span><strong>{records.best[difficulty] === undefined ? text.noRecord : formatTime(records.best[difficulty]!)}</strong></div>)}</div>
         </section>
+      )}
+
+      {settingsOpen && (
+        <div className="completion-backdrop" role="dialog" aria-modal="true" aria-label={text.settings} onClick={() => setSettingsOpen(false)}>
+          <div className="settings-card" onClick={(event) => event.stopPropagation()}>
+            <button className="settings-close" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close">×</button>
+            <img className="settings-icon" src="/icon-settings.png" alt="" />
+            <h2>{text.settings}</h2>
+            <label>{text.appearance}</label>
+            <div className="theme-options">
+              {themes.map((option) => <button className={theme === option ? "is-selected" : ""} type="button" key={option} onClick={() => setTheme(option)} data-option-theme={option} aria-label={option} />)}
+            </div>
+            <label>{text.language}</label>
+            <div className="language-options">
+              <button className={locale === "zh-Hant" ? "is-selected" : ""} type="button" onClick={() => setLocale("zh-Hant")}>繁體中文</button>
+              <button className={locale === "en" ? "is-selected" : ""} type="button" onClick={() => setLocale("en")}>English</button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
