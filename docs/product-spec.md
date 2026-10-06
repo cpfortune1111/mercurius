@@ -175,14 +175,12 @@ Overall:
 
 ### Settings
 
-- Music on or off
-- Sound effects on or off
-- Theme
-- Show mistakes
-- Hide completed numbers
-- Language: Traditional Chinese or English
-- Reduced motion
-- Data reset
+- Master sound on or off, using the original on/off switch artwork
+- Separate BGM and SFX volume sliders
+- Show Mistakes: controls red highlighting for incorrect entries
+- Hide Number Buttons: hides a digit key after all nine correct instances are placed
+
+Theme and language remain directly accessible from the top bar and are not duplicated inside Settings.
 
 ### Offline and installation
 

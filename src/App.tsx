@@ -20,6 +20,14 @@ interface Records {
   best: Partial<Record<Difficulty, number>>;
 }
 
+interface Preferences {
+  sound: boolean;
+  bgmVolume: number;
+  sfxVolume: number;
+  showMistakes: boolean;
+  hideNumberButtons: boolean;
+}
+
 const digits: readonly Digit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const difficulties: readonly Difficulty[] = ["easy", "medium", "hard", "expert"];
 const themes: readonly Theme[] = ["mercury", "aurora", "dawn", "graphite"];
@@ -28,6 +36,7 @@ const storage = {
   hints: "mercurius.hints.v1",
   records: "mercurius.records.v1",
   theme: "mercurius.theme.v1",
+  preferences: "mercurius.preferences.v1",
 } as const;
 
 const copy = {
@@ -40,8 +49,13 @@ const copy = {
     records: "個人紀錄",
     recordsSub: "查看完成數與最佳時間",
     settings: "設定",
-    appearance: "顯示主題",
-    language: "語言",
+    sound: "聲音",
+    bgm: "背景音樂",
+    sfx: "音效",
+    showMistakes: "顯示錯誤",
+    showMistakesSub: "輸入錯誤時以紅色標示",
+    hideNumberButtons: "隱藏已完成數字",
+    hideNumberButtonsSub: "正確填滿 9 次後隱藏數字鍵",
     daily: "每日挑戰",
     missions: "今日任務",
     phase2: "第二階段",
@@ -80,8 +94,13 @@ const copy = {
     records: "Records",
     recordsSub: "Completions and personal bests",
     settings: "Settings",
-    appearance: "Appearance",
-    language: "Language",
+    sound: "Sound",
+    bgm: "BGM",
+    sfx: "SFX",
+    showMistakes: "Show mistakes",
+    showMistakesSub: "Highlight incorrect entries in red",
+    hideNumberButtons: "Hide number buttons",
+    hideNumberButtonsSub: "Hide a digit after all nine are correct",
     daily: "Daily Challenge",
     missions: "Today's Missions",
     phase2: "Phase 2",
@@ -133,6 +152,14 @@ function GameLogo() {
   );
 }
 
+function Toggle({ value, onChange, label }: { value: boolean; onChange: () => void; label: string }) {
+  return (
+    <button className="toggle-button" type="button" role="switch" aria-checked={value} aria-label={label} onClick={onChange}>
+      <img src={value ? "/icon-on.png" : "/icon-off.png"} alt={value ? "On" : "Off"} />
+    </button>
+  );
+}
+
 export function App() {
   const [locale, setLocale] = useState<Locale>("zh-Hant");
   const [screen, setScreen] = useState<Screen>("home");
@@ -145,11 +172,19 @@ export function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [preferences, setPreferences] = useState<Preferences>(() => readJson(storage.preferences, {
+    sound: true,
+    bgmVolume: 70,
+    sfxVolume: 80,
+    showMistakes: true,
+    hideNumberButtons: true,
+  }));
   const text = copy[locale];
 
   useEffect(() => localStorage.setItem(storage.hints, JSON.stringify(hints)), [hints]);
   useEffect(() => localStorage.setItem(storage.records, JSON.stringify(records)), [records]);
   useEffect(() => localStorage.setItem(storage.theme, JSON.stringify(theme)), [theme]);
+  useEffect(() => localStorage.setItem(storage.preferences, JSON.stringify(preferences)), [preferences]);
   useEffect(() => {
     if (activeGame) localStorage.setItem(storage.game, JSON.stringify(activeGame));
     else localStorage.removeItem(storage.game);
@@ -170,6 +205,13 @@ export function App() {
     if (!activeGame || selectedValue === null) return new Set<number>();
     return new Set(activeGame.state.cells.flatMap((cell, index) => cell.value === selectedValue ? [index] : []));
   }, [activeGame, selectedValue]);
+
+  const completedDigits = useMemo(() => {
+    if (!activeGame || !puzzle) return new Set<Digit>();
+    return new Set(digits.filter((digit) =>
+      activeGame.state.cells.filter((cell, index) => cell.value === digit && puzzle.solution[index] === digit).length === 9,
+    ));
+  }, [activeGame, puzzle]);
 
   function goHome() {
     setScreen("home");
@@ -252,7 +294,6 @@ export function App() {
         <img src="/tsukinoaiplus-logo.png" alt="Tsukino Ai Plus" />
       </a>
       <div className="topbar__actions">
-        <span className="hint-balance" title="Hint balance">✦ {hints}</span>
         <button className="icon-button records-button" type="button" onClick={() => setScreen("records")} aria-label={text.records} title={text.records}><img src="/icon-records.png" alt="" /></button>
         <button className="icon-button theme-button" type="button" onClick={cycleTheme} aria-label="Change theme" title="Change theme">◐</button>
         <button className="language-button" type="button" onClick={() => setLocale(locale === "zh-Hant" ? "en" : "zh-Hant")}>{locale === "zh-Hant" ? "EN" : "繁中"}</button>
@@ -317,7 +358,7 @@ export function App() {
                   const isPeer = selected !== null && (row === Math.floor(selected / 9) || col === selected % 9 || (Math.floor(row / 3) === Math.floor(Math.floor(selected / 9) / 3) && Math.floor(col / 3) === Math.floor((selected % 9) / 3)));
                   const wrong = cell.value !== null && cell.value !== puzzle.solution[index];
                   return (
-                    <button key={index} type="button" role="gridcell" className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${wrong ? "cell--wrong" : ""}`} onClick={() => setSelected(index)}>
+                    <button key={index} type="button" role="gridcell" className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${preferences.showMistakes && wrong ? "cell--wrong" : ""}`} onClick={() => setSelected(index)}>
                       {cell.value ?? <span className="notes-grid">{digits.map((digit) => <i key={digit}>{cell.notes.includes(digit) ? digit : ""}</i>)}</span>}
                     </button>
                   );
@@ -329,9 +370,9 @@ export function App() {
                 <button type="button" onClick={() => commitGame(undo(activeGame.state))}><span>↶</span>{text.undo}</button>
                 <button type="button" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span>⌫</span>{text.erase}</button>
                 <button className={notesMode ? "is-active" : ""} type="button" onClick={() => setNotesMode((value) => !value)}><span>✎</span>{text.notes}</button>
-                <button type="button" onClick={useHint} disabled={hints < HINT_COST}><span>✦</span>{text.hint}</button>
+                <button type="button" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon">✦<em>{hints}</em></span>{text.hint}</button>
               </div>
-              <div className="number-pad">{digits.map((digit) => <button type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
+              <div className="number-pad">{digits.map((digit) => <button className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
               {hints === 0 && <div className="reward-card"><strong>{text.rewardHint}</strong><small>{text.prototypeAd}</small></div>}
               <button className="restart-button" type="button" onClick={() => startGame(activeGame.difficulty)}>{text.reset}</button>
             </aside>
@@ -358,16 +399,23 @@ export function App() {
         <div className="completion-backdrop" role="dialog" aria-modal="true" aria-label={text.settings} onClick={() => setSettingsOpen(false)}>
           <div className="settings-card" onClick={(event) => event.stopPropagation()}>
             <button className="settings-close" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close">×</button>
-            <img className="settings-icon" src="/icon-settings.png" alt="" />
             <h2>{text.settings}</h2>
-            <label>{text.appearance}</label>
-            <div className="theme-options">
-              {themes.map((option) => <button className={theme === option ? "is-selected" : ""} type="button" key={option} onClick={() => setTheme(option)} data-option-theme={option} aria-label={option} />)}
+            <div className="sound-master">
+              <img src="/icon-music.png" alt="" />
+              <strong>{text.sound}</strong>
+              <Toggle value={preferences.sound} label={text.sound} onChange={() => setPreferences((current) => ({ ...current, sound: !current.sound }))} />
             </div>
-            <label>{text.language}</label>
-            <div className="language-options">
-              <button className={locale === "zh-Hant" ? "is-selected" : ""} type="button" onClick={() => setLocale("zh-Hant")}>繁體中文</button>
-              <button className={locale === "en" ? "is-selected" : ""} type="button" onClick={() => setLocale("en")}>English</button>
+            <div className={`volume-controls ${preferences.sound ? "" : "is-disabled"}`}>
+              <label><span>{text.bgm}</span><input type="range" min="0" max="100" value={preferences.bgmVolume} disabled={!preferences.sound} onChange={(event) => setPreferences((current) => ({ ...current, bgmVolume: Number(event.target.value) }))} /></label>
+              <label><span>{text.sfx}</span><input type="range" min="0" max="100" value={preferences.sfxVolume} disabled={!preferences.sound} onChange={(event) => setPreferences((current) => ({ ...current, sfxVolume: Number(event.target.value) }))} /></label>
+            </div>
+            <div className="setting-toggle-row">
+              <span><strong>{text.showMistakes}</strong><small>{text.showMistakesSub}</small></span>
+              <Toggle value={preferences.showMistakes} label={text.showMistakes} onChange={() => setPreferences((current) => ({ ...current, showMistakes: !current.showMistakes }))} />
+            </div>
+            <div className="setting-toggle-row">
+              <span><strong>{text.hideNumberButtons}</strong><small>{text.hideNumberButtonsSub}</small></span>
+              <Toggle value={preferences.hideNumberButtons} label={text.hideNumberButtons} onChange={() => setPreferences((current) => ({ ...current, hideNumberButtons: !current.hideNumberButtons }))} />
             </div>
           </div>
         </div>
