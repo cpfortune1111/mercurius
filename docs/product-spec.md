@@ -180,7 +180,7 @@ Overall:
 - Show Mistakes: controls red highlighting for incorrect entries
 - Hide Number Buttons: hides a digit key after all nine correct instances are placed
 
-Theme and language remain directly accessible from the top bar and are not duplicated inside Settings.
+Skin, color tone, and language remain directly accessible from the top bar and are not duplicated inside Settings. Each skin supports Light, Dark, and Superdark tones.
 
 ### Offline and installation
 
@@ -249,8 +249,8 @@ The Home screen evolves the original composition rather than replacing its ident
 - Retain the existing top bar concept
 - Present three primary actions in the central area
 - Reserve the left-side navigation area for Missions and Calendar when phase-two features are enabled
-- Keep four themes available from the initial release
-- Future unlockable themes cost 100 Mercury Points each
+- Keep four skins available from the initial release, each with Light, Dark, and Superdark tones
+- Future unlockable skins cost 100 Mercury Points each
 
 ## 10. Localization and accessibility
 

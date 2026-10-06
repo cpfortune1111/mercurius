@@ -6,7 +6,8 @@ import type { Difficulty, Digit, GameState } from "./core/types";
 
 type Locale = "zh-Hant" | "en";
 type Screen = "home" | "difficulty" | "game" | "records";
-type Theme = "mercury" | "aurora" | "dawn" | "graphite";
+type Skin = "mercury" | "aurora" | "dawn" | "graphite";
+type Tone = "light" | "dark" | "superdark";
 
 interface SavedGame {
   difficulty: Difficulty;
@@ -30,12 +31,19 @@ interface Preferences {
 
 const digits: readonly Digit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const difficulties: readonly Difficulty[] = ["easy", "medium", "hard", "expert"];
-const themes: readonly Theme[] = ["mercury", "aurora", "dawn", "graphite"];
+const skins: readonly Skin[] = ["mercury", "aurora", "dawn", "graphite"];
+const tones: readonly Tone[] = ["light", "dark", "superdark"];
+const toneIcons: Readonly<Record<Tone, string>> = {
+  light: "/icon-theme.png",
+  dark: "/icon-theme-dark.png",
+  superdark: "/icon-theme-superdark.png",
+};
 const storage = {
   game: "mercurius.active-game.v1",
   hints: "mercurius.hints.v1",
   records: "mercurius.records.v1",
   theme: "mercurius.theme.v1",
+  tone: "mercurius.tone.v1",
   preferences: "mercurius.preferences.v1",
 } as const;
 
@@ -163,7 +171,8 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: () => vo
 export function App() {
   const [locale, setLocale] = useState<Locale>("zh-Hant");
   const [screen, setScreen] = useState<Screen>("home");
-  const [theme, setTheme] = useState<Theme>(() => readJson(storage.theme, "mercury"));
+  const [skin, setSkin] = useState<Skin>(() => readJson(storage.theme, "mercury"));
+  const [tone, setTone] = useState<Tone>(() => readJson(storage.tone, "dark"));
   const [hints, setHints] = useState(() => readJson(storage.hints, INITIAL_HINTS));
   const [activeGame, setActiveGame] = useState<SavedGame | null>(() => readJson(storage.game, null));
   const [records, setRecords] = useState<Records>(() =>
@@ -183,7 +192,8 @@ export function App() {
 
   useEffect(() => localStorage.setItem(storage.hints, JSON.stringify(hints)), [hints]);
   useEffect(() => localStorage.setItem(storage.records, JSON.stringify(records)), [records]);
-  useEffect(() => localStorage.setItem(storage.theme, JSON.stringify(theme)), [theme]);
+  useEffect(() => localStorage.setItem(storage.theme, JSON.stringify(skin)), [skin]);
+  useEffect(() => localStorage.setItem(storage.tone, JSON.stringify(tone)), [tone]);
   useEffect(() => localStorage.setItem(storage.preferences, JSON.stringify(preferences)), [preferences]);
   useEffect(() => {
     if (activeGame) localStorage.setItem(storage.game, JSON.stringify(activeGame));
@@ -281,28 +291,33 @@ export function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [screen, activeGame, selected, notesMode]);
 
-  function cycleTheme() {
-    setTheme((current) => themes[(themes.indexOf(current) + 1) % themes.length]);
+  function cycleSkin() {
+    setSkin((current) => skins[(skins.indexOf(current) + 1) % skins.length]);
+  }
+
+  function cycleTone() {
+    setTone((current) => tones[(tones.indexOf(current) + 1) % tones.length]);
   }
 
   const header = (
     <header className="topbar">
-      <button className="topbar__settings" type="button" onClick={() => setSettingsOpen(true)} aria-label={text.settings} title={text.settings}>
-        <img src="/icon-settings.png" alt="" />
-      </button>
+      <div className="topbar__left">
+        <button className="topbar__settings" type="button" onClick={() => setSettingsOpen(true)} aria-label={text.settings} title={text.settings}><img src="/icon-settings.png" alt="" /></button>
+        <button className="icon-button records-button" type="button" onClick={() => setScreen("records")} aria-label={text.records} title={text.records}><img src="/icon-records.png" alt="" /></button>
+      </div>
       <a className="studio-link" href="https://tsukinoaiplus.com" target="_blank" rel="noreferrer" aria-label="Tsukino Ai Plus website">
         <img src="/tsukinoaiplus-logo.png" alt="Tsukino Ai Plus" />
       </a>
       <div className="topbar__actions">
-        <button className="icon-button records-button" type="button" onClick={() => setScreen("records")} aria-label={text.records} title={text.records}><img src="/icon-records.png" alt="" /></button>
-        <button className="icon-button theme-button" type="button" onClick={cycleTheme} aria-label="Change theme" title="Change theme">◐</button>
         <button className="language-button" type="button" onClick={() => setLocale(locale === "zh-Hant" ? "en" : "zh-Hant")}>{locale === "zh-Hant" ? "EN" : "繁中"}</button>
+        <button className="icon-button skin-button" type="button" onClick={cycleSkin} aria-label="Change skin" title={`Skin: ${skin}`}><img src="/icon-skin.png" alt="" /></button>
+        <button className="icon-button theme-button" type="button" onClick={cycleTone} aria-label="Change color tone" title={`Tone: ${tone}`}><img src={toneIcons[tone]} alt="" /></button>
       </div>
     </header>
   );
 
   return (
-    <main className="app" data-theme={theme}>
+    <main className="app" data-skin={skin} data-tone={tone}>
       <div className="stars" aria-hidden="true" />
       {header}
 
@@ -347,7 +362,10 @@ export function App() {
           <div className="game-heading">
             <button className="back-button" type="button" onClick={goHome}>←</button>
             <div><span>{text[activeGame.difficulty]}</span><strong>{formatTime(activeGame.elapsed)}</strong></div>
-            <div className="mistake-count"><small>{text.mistakes}</small><strong>{activeGame.state.mistakes} ∞</strong></div>
+            <div className="game-status-actions">
+              <div className="mistake-count"><small>{text.mistakes}</small><strong>{activeGame.state.mistakes}</strong></div>
+              <button className="header-reset" type="button" onClick={() => startGame(activeGame.difficulty)}><span>↻</span><small>{text.reset}</small></button>
+            </div>
           </div>
           <div className="play-layout">
             <div className="board-wrap">
@@ -359,7 +377,7 @@ export function App() {
                   const wrong = cell.value !== null && cell.value !== puzzle.solution[index];
                   return (
                     <button key={index} type="button" role="gridcell" className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${preferences.showMistakes && wrong ? "cell--wrong" : ""}`} onClick={() => setSelected(index)}>
-                      {cell.value ?? <span className="notes-grid">{digits.map((digit) => <i key={digit}>{cell.notes.includes(digit) ? digit : ""}</i>)}</span>}
+                      {cell.value ?? <span className="notes-grid">{digits.map((digit) => <i className={selectedValue === digit && cell.notes.includes(digit) ? "note--highlighted" : ""} key={digit}>{cell.notes.includes(digit) ? digit : ""}</i>)}</span>}
                     </button>
                   );
                 })}
@@ -374,7 +392,6 @@ export function App() {
               </div>
               <div className="number-pad">{digits.map((digit) => <button className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
               {hints === 0 && <div className="reward-card"><strong>{text.rewardHint}</strong><small>{text.prototypeAd}</small></div>}
-              <button className="restart-button" type="button" onClick={() => startGame(activeGame.difficulty)}>{text.reset}</button>
             </aside>
           </div>
           {activeGame.state.completed && (
