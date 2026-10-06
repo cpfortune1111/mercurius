@@ -4,6 +4,12 @@ const BOARD_SIZE = 9;
 const CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
 const ALL_DIGITS: readonly Digit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
+export interface GameEdit {
+  readonly index: number;
+  readonly value?: Digit | null;
+  readonly notes?: readonly Digit[];
+}
+
 function assertCellIndex(index: number): void {
   if (!Number.isInteger(index) || index < 0 || index >= CELL_COUNT) {
     throw new RangeError(`Cell index ${index} is outside the board`);
@@ -139,6 +145,27 @@ export function eraseCell(state: GameState, index: number): GameState {
     cellIndex === index ? { ...copyCell(cell), value: null, notes: [] } : copyCell(cell),
   );
   return withHistory(state, cells);
+}
+
+export function applyGameEdits(
+  state: GameState,
+  puzzle: PuzzleDefinition,
+  edits: readonly GameEdit[],
+): GameState {
+  if (state.completed || edits.length === 0) return state;
+
+  const byIndex = new Map(edits.map((edit) => [edit.index, edit]));
+  const cells = state.cells.map((cell, index): GameCell => {
+    const edit = byIndex.get(index);
+    if (!edit || cell.given) return copyCell(cell);
+    return {
+      ...copyCell(cell),
+      value: edit.value === undefined ? cell.value : edit.value,
+      notes: edit.notes === undefined ? [...cell.notes] : [...edit.notes],
+    };
+  });
+  const next = withHistory(state, cells);
+  return { ...next, completed: isComplete(next, puzzle) };
 }
 
 export function undo(state: GameState): GameState {

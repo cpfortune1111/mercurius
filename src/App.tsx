@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { HINT_COST, INITIAL_HINTS, REWARDED_AD_HINTS } from "./application/rules";
 import { referencePuzzles } from "./content/reference-puzzles";
 import { createGame, eraseCell, placeDigit, toggleNote, undo } from "./core/game";
+import { applySmartHint, findSmartHint, type SmartHint } from "./core/hints";
 import type { Difficulty, Digit, GameState } from "./core/types";
 
 type Locale = "zh-Hant" | "en";
@@ -82,6 +83,12 @@ const copy = {
     erase: "清除",
     undo: "復原",
     hint: "提示",
+    hintGuide: "解題提示",
+    hintBack: "上一頁",
+    hintNext: "下一頁",
+    hintApply: "套用提示",
+    hintClose: "關閉提示",
+    hintPage: "步驟",
     reset: "重新開始",
     finished: "棋局完成",
     finishedSub: "水星記錄了你今次的軌跡。",
@@ -127,6 +134,12 @@ const copy = {
     erase: "Erase",
     undo: "Undo",
     hint: "Hint",
+    hintGuide: "Solving Hint",
+    hintBack: "Back",
+    hintNext: "Next",
+    hintApply: "Apply Hint",
+    hintClose: "Close hint",
+    hintPage: "Step",
     reset: "Restart",
     finished: "Puzzle complete",
     finishedSub: "Mercury has recorded this orbit.",
@@ -180,6 +193,8 @@ export function App() {
   );
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
+  const [activeHint, setActiveHint] = useState<SmartHint | null>(null);
+  const [hintPage, setHintPage] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>(() => readJson(storage.preferences, {
     sound: true,
@@ -223,12 +238,18 @@ export function App() {
     ));
   }, [activeGame, puzzle]);
 
+  const hintHighlights = useMemo(() => new Map(
+    activeHint?.highlights.map((highlight) => [highlight.index, highlight.type]) ?? [],
+  ), [activeHint]);
+
   function goHome() {
+    setActiveHint(null);
     setScreen("home");
     setSelected(null);
   }
 
   function startGame(difficulty: Difficulty) {
+    setActiveHint(null);
     setActiveGame({ difficulty, state: createGame(referencePuzzles[difficulty]), elapsed: 0, hintsUsed: 0 });
     setSelected(null);
     setNotesMode(false);
@@ -264,18 +285,24 @@ export function App() {
   }
 
   function useHint() {
-    if (!activeGame || !puzzle || hints < HINT_COST) return;
-    const target = selected !== null && !activeGame.state.cells[selected].given
-      ? selected
-      : activeGame.state.cells.findIndex((cell, index) => !cell.given && cell.value !== puzzle.solution[index]);
-    if (target < 0) return;
-    setSelected(target);
+    if (!activeGame || !puzzle || hints < HINT_COST || activeHint) return;
+    const hint = findSmartHint(activeGame.state, puzzle);
+    if (!hint) return;
     setHints((value) => value - HINT_COST);
-    commitGame(placeDigit(activeGame.state, puzzle, target, puzzle.solution[target]), 1);
+    setActiveGame({ ...activeGame, hintsUsed: activeGame.hintsUsed + 1 });
+    setActiveHint(hint);
+    setHintPage(0);
+  }
+
+  function applyHint() {
+    if (!activeGame || !puzzle || !activeHint) return;
+    commitGame(applySmartHint(activeGame.state, puzzle, activeHint));
+    setActiveHint(null);
+    setHintPage(0);
   }
 
   useEffect(() => {
-    if (screen !== "game") return;
+    if (screen !== "game" || activeHint) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (/^[1-9]$/.test(event.key)) enterDigit(Number(event.key) as Digit);
       if ((event.key === "Backspace" || event.key === "Delete") && activeGame && selected !== null) {
@@ -289,7 +316,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [screen, activeGame, selected, notesMode]);
+  }, [screen, activeGame, selected, notesMode, activeHint]);
 
   function cycleSkin() {
     setSkin((current) => skins[(skins.indexOf(current) + 1) % skins.length]);
@@ -376,7 +403,7 @@ export function App() {
                   const isPeer = selected !== null && (row === Math.floor(selected / 9) || col === selected % 9 || (Math.floor(row / 3) === Math.floor(Math.floor(selected / 9) / 3) && Math.floor(col / 3) === Math.floor((selected % 9) / 3)));
                   const wrong = cell.value !== null && cell.value !== puzzle.solution[index];
                   return (
-                    <button key={index} type="button" role="gridcell" className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${preferences.showMistakes && wrong ? "cell--wrong" : ""}`} onClick={() => setSelected(index)}>
+                    <button key={index} type="button" role="gridcell" className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${preferences.showMistakes && wrong ? "cell--wrong" : ""} ${hintHighlights.has(index) ? `cell--hint-${hintHighlights.get(index)}` : ""}`} onClick={() => setSelected(index)}>
                       {cell.value ?? <span className="notes-grid">{digits.map((digit) => <i className={selectedValue === digit && cell.notes.includes(digit) ? "note--highlighted" : ""} key={digit}>{cell.notes.includes(digit) ? digit : ""}</i>)}</span>}
                     </button>
                   );
@@ -399,6 +426,36 @@ export function App() {
               <div className="completion-card"><span className="completion-mark">☿</span><p className="eyebrow">ORBIT COMPLETE</p><h2>{text.finished}</h2><p>{text.finishedSub}</p><strong className="completion-time">{formatTime(activeGame.elapsed)}</strong><div><button type="button" onClick={goHome}>{text.backHome}</button><button className="primary-button" type="button" onClick={() => setScreen("difficulty")}>{text.playAgain}</button></div></div>
             </div>
           )}
+          {activeHint && (() => {
+            const localizedHint = activeHint.copy[locale];
+            const lastPage = localizedHint.pages.length - 1;
+            return (
+              <div className="hint-backdrop" role="dialog" aria-modal="true" aria-labelledby="hint-title">
+                <div className="hint-window">
+                  <button className="hint-close" type="button" onClick={() => setActiveHint(null)} aria-label={text.hintClose}>×</button>
+                  <span className="hint-symbol">✦</span>
+                  <p className="eyebrow">{text.hintGuide}</p>
+                  <h2 id="hint-title">{localizedHint.title}</h2>
+                  <div className="hint-step">
+                    <span>{text.hintPage} {hintPage + 1} / {localizedHint.pages.length}</span>
+                    <div>{localizedHint.pages.map((_, index) => <i className={index === hintPage ? "is-current" : ""} key={index} />)}</div>
+                  </div>
+                  <p className="hint-explanation">{localizedHint.pages[hintPage]}</p>
+                  <div className="hint-legend">
+                    {activeHint.highlights.some((item) => item.type === "key") && <span><i className="legend-key" />{locale === "zh-Hant" ? "重點格" : "Key cell"}</span>}
+                    {activeHint.highlights.some((item) => item.type === "auxiliary") && <span><i className="legend-auxiliary" />{locale === "zh-Hant" ? "候選格" : "Candidate cells"}</span>}
+                    {activeHint.highlights.some((item) => item.type === "eliminate" || item.type === "error") && <span><i className="legend-remove" />{locale === "zh-Hant" ? "要修正" : "Change"}</span>}
+                  </div>
+                  <div className="hint-actions">
+                    <button type="button" disabled={hintPage === 0} onClick={() => setHintPage((page) => Math.max(0, page - 1))}>{text.hintBack}</button>
+                    {hintPage < lastPage
+                      ? <button className="primary-button" type="button" onClick={() => setHintPage((page) => Math.min(lastPage, page + 1))}>{text.hintNext}</button>
+                      : <button className="primary-button" type="button" onClick={applyHint}>{text.hintApply}</button>}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </section>
       )}
 
