@@ -31,6 +31,7 @@ interface Preferences {
 }
 
 const digits: readonly Digit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+const DEV_HINTS = 9999;
 const difficulties: readonly Difficulty[] = ["easy", "medium", "hard", "expert"];
 const skins: readonly Skin[] = ["mercury", "aurora", "dawn", "graphite"];
 const tones: readonly Tone[] = ["light", "dark", "superdark"];
@@ -186,7 +187,9 @@ export function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [skin, setSkin] = useState<Skin>(() => readJson(storage.theme, "mercury"));
   const [tone, setTone] = useState<Tone>(() => readJson(storage.tone, "dark"));
-  const [hints, setHints] = useState(() => readJson(storage.hints, INITIAL_HINTS));
+  const [hints, setHints] = useState(() =>
+    import.meta.env.DEV ? DEV_HINTS : readJson(storage.hints, INITIAL_HINTS),
+  );
   const [activeGame, setActiveGame] = useState<SavedGame | null>(() => readJson(storage.game, null));
   const [records, setRecords] = useState<Records>(() =>
     readJson(storage.records, { completed: 0, best: {} }),
@@ -205,6 +208,9 @@ export function App() {
   }));
   const text = copy[locale];
 
+  useEffect(() => {
+    if (import.meta.env.DEV) setHints((current) => Math.max(current, DEV_HINTS));
+  }, []);
   useEffect(() => localStorage.setItem(storage.hints, JSON.stringify(hints)), [hints]);
   useEffect(() => localStorage.setItem(storage.records, JSON.stringify(records)), [records]);
   useEffect(() => localStorage.setItem(storage.theme, JSON.stringify(skin)), [skin]);
