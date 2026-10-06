@@ -363,7 +363,7 @@ export function App() {
             <button className="back-button" type="button" onClick={goHome}>←</button>
             <div><span>{text[activeGame.difficulty]}</span><strong>{formatTime(activeGame.elapsed)}</strong></div>
             <div className="game-status-actions">
-              <div className="mistake-count"><small>{text.mistakes}</small><strong>{activeGame.state.mistakes}</strong></div>
+              <div className="mistake-count"><strong>{activeGame.state.mistakes}</strong><small>{text.mistakes}</small></div>
               <button className="header-reset" type="button" onClick={() => startGame(activeGame.difficulty)}><span>↻</span><small>{text.reset}</small></button>
             </div>
           </div>
