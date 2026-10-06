@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { HINT_COST, INITIAL_HINTS, REWARDED_AD_HINTS } from "./application/rules";
 import { referencePuzzles } from "./content/reference-puzzles";
-import { createGame, eraseCell, placeDigit, toggleNote, undo } from "./core/game";
+import { createGame, eraseCell, isAutoFillAvailable, placeDigit, toggleNote, undo } from "./core/game";
 import { applySmartHint, findSmartHint, type SmartHint } from "./core/hints";
 import type { Difficulty, Digit, GameState } from "./core/types";
 
@@ -90,6 +90,8 @@ const copy = {
     hintApply: "套用提示",
     hintClose: "關閉提示",
     hintPage: "步驟",
+    autoFill: "自動完成",
+    autoFillSub: "完成餘下正確答案",
     reset: "重新開始",
     finished: "棋局完成",
     finishedSub: "水星記錄了你今次的軌跡。",
@@ -141,6 +143,8 @@ const copy = {
     hintApply: "Apply Hint",
     hintClose: "Close hint",
     hintPage: "Step",
+    autoFill: "Auto Fill",
+    autoFillSub: "Complete the remaining cells",
     reset: "Restart",
     finished: "Puzzle complete",
     finishedSub: "Mercury has recorded this orbit.",
@@ -198,6 +202,8 @@ export function App() {
   const [notesMode, setNotesMode] = useState(false);
   const [activeHint, setActiveHint] = useState<SmartHint | null>(null);
   const [hintPage, setHintPage] = useState(0);
+  const [autoFilling, setAutoFilling] = useState(false);
+  const [completionOrigin, setCompletionOrigin] = useState<number | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>(() => readJson(storage.preferences, {
     sound: true,
@@ -247,6 +253,7 @@ export function App() {
   const hintHighlights = useMemo(() => new Map(
     activeHint?.highlights.map((highlight) => [highlight.index, highlight.type]) ?? [],
   ), [activeHint]);
+  const showAutoFill = Boolean(activeGame && puzzle && isAutoFillAvailable(activeGame.state, puzzle));
 
   function goHome() {
     setActiveHint(null);
@@ -256,18 +263,24 @@ export function App() {
 
   function startGame(difficulty: Difficulty) {
     setActiveHint(null);
+    setAutoFilling(false);
+    setCompletionOrigin(null);
     setActiveGame({ difficulty, state: createGame(referencePuzzles[difficulty]), elapsed: 0, hintsUsed: 0 });
     setSelected(null);
     setNotesMode(false);
     setScreen("game");
   }
 
-  function commitGame(state: GameState, hintDelta = 0) {
+  function commitGame(state: GameState, hintDelta = 0, completedAt = selected) {
     if (!activeGame) return;
     const justCompleted = !activeGame.state.completed && state.completed;
-    const nextGame = { ...activeGame, state, hintsUsed: activeGame.hintsUsed + hintDelta };
-    setActiveGame(nextGame);
+    setActiveGame((current) => current ? {
+      ...current,
+      state,
+      hintsUsed: current.hintsUsed + hintDelta,
+    } : current);
     if (justCompleted) {
+      setCompletionOrigin(completedAt);
       setRecords((current) => {
         const existing = current.best[activeGame.difficulty];
         return {
@@ -284,7 +297,7 @@ export function App() {
   }
 
   function enterDigit(digit: Digit) {
-    if (!activeGame || !puzzle || selected === null) return;
+    if (!activeGame || !puzzle || selected === null || autoFilling) return;
     commitGame(notesMode
       ? toggleNote(activeGame.state, selected, digit)
       : placeDigit(activeGame.state, puzzle, selected, digit));
@@ -302,9 +315,28 @@ export function App() {
 
   function applyHint() {
     if (!activeGame || !puzzle || !activeHint) return;
-    commitGame(applySmartHint(activeGame.state, puzzle, activeHint));
+    const completedAt = activeHint.edits.find((edit) => edit.value !== undefined && edit.value !== null)?.index ?? selected;
+    commitGame(applySmartHint(activeGame.state, puzzle, activeHint), 0, completedAt);
     setActiveHint(null);
     setHintPage(0);
+  }
+
+  async function autoFillRemaining() {
+    if (!activeGame || !puzzle || autoFilling || !isAutoFillAvailable(activeGame.state, puzzle)) return;
+    const emptyCells = activeGame.state.cells.flatMap((cell, index) => cell.value === null ? [index] : []);
+    if (emptyCells.length === 0) return;
+    setAutoFilling(true);
+    let state = activeGame.state;
+    for (const [position, index] of emptyCells.entries()) {
+      state = placeDigit(state, puzzle, index, puzzle.solution[index]);
+      setSelected(index);
+      if (position < emptyCells.length - 1) {
+        setActiveGame((current) => current ? { ...current, state } : current);
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+      }
+    }
+    commitGame(state, 0, emptyCells.at(-1) ?? selected);
+    setAutoFilling(false);
   }
 
   useEffect(() => {
@@ -322,8 +354,9 @@ export function App() {
         }
         return;
       }
-      if (activeHint || settingsOpen) return;
+      if (activeHint || settingsOpen || autoFilling) return;
       if (/^[1-9]$/.test(event.key)) enterDigit(Number(event.key) as Digit);
+      if (showAutoFill) return;
       if (event.key === "Backspace" && activeGame) {
         event.preventDefault();
         commitGame(undo(activeGame.state));
@@ -341,7 +374,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [screen, activeGame, selected, notesMode, activeHint, settingsOpen]);
+  }, [screen, activeGame, selected, notesMode, activeHint, settingsOpen, autoFilling, showAutoFill]);
 
   function cycleSkin() {
     setSkin((current) => skins[(skins.indexOf(current) + 1) % skins.length]);
@@ -421,14 +454,18 @@ export function App() {
           </div>
           <div className="play-layout">
             <div className="board-wrap">
-              <div className="sudoku-board" role="grid" aria-label="Sudoku board">
+              <div className={`sudoku-board ${activeGame.state.completed && completionOrigin !== null ? "board--completed" : ""}`} role="grid" aria-label="Sudoku board">
                 {activeGame.state.cells.map((cell, index) => {
                   const row = Math.floor(index / 9);
                   const col = index % 9;
                   const isPeer = selected !== null && (row === Math.floor(selected / 9) || col === selected % 9 || (Math.floor(row / 3) === Math.floor(Math.floor(selected / 9) / 3) && Math.floor(col / 3) === Math.floor((selected % 9) / 3)));
                   const wrong = cell.value !== null && cell.value !== puzzle.solution[index];
+                  const rippleDelay = completionOrigin === null ? 0 : Math.hypot(
+                    row - Math.floor(completionOrigin / 9),
+                    col - completionOrigin % 9,
+                  ) * 0.1;
                   return (
-                    <button key={index} type="button" role="gridcell" className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${preferences.showMistakes && wrong ? "cell--wrong" : ""} ${hintHighlights.has(index) ? `cell--hint-${hintHighlights.get(index)}` : ""}`} onClick={() => setSelected(index)}>
+                    <button key={index} type="button" role="gridcell" disabled={autoFilling || activeGame.state.completed} style={{ "--ripple-delay": `${rippleDelay}s` } as CSSProperties} className={`cell ${cell.given ? "cell--given" : ""} ${selected === index ? "cell--selected" : ""} ${isPeer ? "cell--peer" : ""} ${sameDigitCells.has(index) ? "cell--same" : ""} ${preferences.showMistakes && wrong ? "cell--wrong" : ""} ${hintHighlights.has(index) ? `cell--hint-${hintHighlights.get(index)}` : ""}`} onClick={() => setSelected(index)}>
                       {cell.value ?? <span className="notes-grid">{digits.map((digit) => <i className={selectedValue === digit && cell.notes.includes(digit) ? "note--highlighted" : ""} key={digit}>{cell.notes.includes(digit) ? digit : ""}</i>)}</span>}
                     </button>
                   );
@@ -436,18 +473,24 @@ export function App() {
               </div>
             </div>
             <aside className="game-controls">
-              <div className="tool-row">
-                <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span>↶</span>{text.undo}</button>
-                <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span>⌫</span>{text.erase}</button>
-                <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span>✎</span>{text.notes}</button>
-                <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon">✦<em>{hints}</em></span>{text.hint}</button>
-              </div>
-              <div className="number-pad">{digits.map((digit) => <button className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
+              {showAutoFill || autoFilling ? (
+                <button className="auto-fill-button" type="button" onClick={autoFillRemaining} disabled={autoFilling}>
+                  <span>{autoFilling ? "•••" : "✦"}</span><strong>{text.autoFill}</strong><small>{text.autoFillSub}</small>
+                </button>
+              ) : (
+                <div className="tool-row">
+                  <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span>↶</span>{text.undo}</button>
+                  <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span>⌫</span>{text.erase}</button>
+                  <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span>✎</span>{text.notes}</button>
+                  <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon">✦<em>{hints}</em></span>{text.hint}</button>
+                </div>
+              )}
+              <div className="number-pad">{digits.map((digit) => <button disabled={autoFilling || activeGame.state.completed} className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
               {hints === 0 && <div className="reward-card"><strong>{text.rewardHint}</strong><small>{text.prototypeAd}</small></div>}
             </aside>
           </div>
           {activeGame.state.completed && (
-            <div className="completion-backdrop" role="dialog" aria-modal="true">
+            <div className={`completion-backdrop ${completionOrigin !== null ? "completion-backdrop--delayed" : ""}`} role="dialog" aria-modal="true">
               <div className="completion-card"><span className="completion-mark">☿</span><p className="eyebrow">ORBIT COMPLETE</p><h2>{text.finished}</h2><p>{text.finishedSub}</p><strong className="completion-time">{formatTime(activeGame.elapsed)}</strong><div><button type="button" onClick={goHome}>{text.backHome}</button><button className="primary-button" type="button" onClick={() => setScreen("difficulty")}>{text.playAgain}</button></div></div>
             </div>
           )}

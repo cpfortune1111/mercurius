@@ -5,6 +5,7 @@ import {
   eraseCell,
   getCandidates,
   isComplete,
+  isAutoFillAvailable,
   placeDigit,
   toggleNote,
   undo,
@@ -125,5 +126,16 @@ describe("game state", () => {
 
     expect(state.completed).toBe(true);
     expect(isComplete(state, puzzle)).toBe(true);
+  });
+
+  it("offers Auto Fill at 90 percent only when every placed digit is correct", () => {
+    const atThreshold = puzzleWithGivens(Array.from({ length: 73 }, (_, index) => index));
+    const belowThreshold = puzzleWithGivens(Array.from({ length: 72 }, (_, index) => index));
+
+    expect(isAutoFillAvailable(createGame(atThreshold), atThreshold)).toBe(true);
+    expect(isAutoFillAvailable(createGame(belowThreshold), belowThreshold)).toBe(false);
+
+    const wrong = placeDigit(createGame(atThreshold), atThreshold, 73, 1);
+    expect(isAutoFillAvailable(wrong, atThreshold)).toBe(false);
   });
 });

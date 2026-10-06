@@ -194,3 +194,11 @@ export function undo(state: GameState): GameState {
 export function isComplete(state: GameState, puzzle: PuzzleDefinition): boolean {
   return state.cells.every((cell, index) => cell.value === puzzle.solution[index]);
 }
+
+export function isAutoFillAvailable(state: GameState, puzzle: PuzzleDefinition): boolean {
+  if (state.completed) return false;
+  const filledCells = state.cells.filter((cell) => cell.value !== null).length;
+  const hasIncorrect = state.cells.some((cell, index) =>
+    cell.value !== null && cell.value !== puzzle.solution[index]);
+  return filledCells / state.cells.length >= 0.9 && !hasIncorrect;
+}
