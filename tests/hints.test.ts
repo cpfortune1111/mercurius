@@ -52,8 +52,21 @@ describe("legacy smart hint flow", () => {
 
     const applied = applySmartHint(state, definition, hint!);
     expect(applied.cells[0].notes).toEqual([5]);
-    expect(applied.cells[1].notes).toEqual([3]);
+    expect(applied.cells[1].notes).toEqual([]);
     expect(applied.cells[0].value).toBeNull();
+  });
+
+  it("uses the legacy batch threshold when at least three cells need notes", () => {
+    const definition = puzzle([0, 1, 2]);
+    const state = createGame(definition);
+    const hint = findSmartHint(state, definition)!;
+    const applied = applySmartHint(state, definition, hint);
+
+    expect(hint.strategy).toBe("auto-fill-notes");
+    expect(hint.edits).toHaveLength(3);
+    expect(applied.cells[0].notes).toEqual([5]);
+    expect(applied.cells[1].notes).toEqual([3]);
+    expect(applied.cells[2].notes).toEqual([4]);
   });
 
   it("returns a logical fill after notes are complete", () => {

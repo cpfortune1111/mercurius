@@ -1,4 +1,5 @@
 import { applyGameEdits, getCandidates, type GameEdit } from "./game";
+import { findColorHint, findFishHint, findHiddenSubsetHint, findNakedSubsetHint, findWingHint, findXCycleHint } from "./advanced-hints";
 import type { Digit, GameState, PuzzleDefinition } from "./types";
 
 export type HintHighlight = "key" | "error" | "eliminate" | "auxiliary" | "cycle";
@@ -9,9 +10,21 @@ export type HintStrategy =
   | "hidden-single"
   | "naked-pair"
   | "hidden-pair"
+  | "naked-triplet"
+  | "hidden-triplet"
+  | "naked-quad"
+  | "hidden-quad"
   | "intersection-removal"
   | "last-blank"
-  | "last-remaining-cell";
+  | "last-remaining-cell"
+  | "simple-coloring"
+  | "color-wrap"
+  | "x-wing"
+  | "swordfish"
+  | "jellyfish"
+  | "x-cycle"
+  | "xy-wing"
+  | "xyz-wing";
 
 export interface HintCellHighlight {
   readonly index: number;
@@ -91,25 +104,34 @@ function incorrectAnswer(state: GameState, puzzle: PuzzleDefinition): SmartHint 
 }
 
 function autoFillNotes(state: GameState, puzzle: PuzzleDefinition): SmartHint | null {
-  const cellsMissingAnswer = state.cells
-    .map((cell, index) => ({ cell, index }))
-    .filter(({ cell, index }) =>
-      !cell.given && cell.value === null && !cell.notes.includes(puzzle.solution[index]));
-  if (cellsMissingAnswer.length === 0) return null;
+  const allCorrectAnswersPresent = state.cells.every((cell, index) =>
+    cell.given || cell.value !== null || cell.notes.includes(puzzle.solution[index]));
+  if (allCorrectAnswersPresent) return null;
 
   const edits: GameEdit[] = [];
-  for (const { cell, index } of cellsMissingAnswer) {
+  for (let index = 0; index < 81; index += 1) {
+    const cell = state.cells[index];
+    if (cell.given || cell.value !== null) continue;
     const candidates = getCandidates(state, index);
     const notes = [...new Set([...cell.notes, ...candidates])].sort((a, b) => a - b) as Digit[];
     if (notes.length !== cell.notes.length) edits.push({ index, notes });
   }
   if (edits.length === 0) return null;
   const total = edits.reduce((sum, edit) => sum + (edit.notes!.length - state.cells[edit.index].notes.length), 0);
-  const highlights = edits.map(({ index }) => ({ index, type: "auxiliary" as const }));
+  const appliedEdits = edits.length >= 3 || total >= 10
+    ? edits
+    : [edits.reduce((best, edit) =>
+      edit.notes!.length - state.cells[edit.index].notes.length > best.notes!.length - state.cells[best.index].notes.length ? edit : best)];
+  const appliedTotal = appliedEdits.reduce((sum, edit) => sum + (edit.notes!.length - state.cells[edit.index].notes.length), 0);
+  const highlights = appliedEdits.map(({ index }) => ({ index, type: "auxiliary" as const }));
+  const zh = appliedEdits.length === 1
+    ? `${cellName(appliedEdits[0].index)} 欠缺 ${appliedTotal} 個有效筆記。`
+    : `有 ${appliedEdits.length} 格欠缺有效候選數字，共可補上 ${appliedTotal} 個筆記。`;
+  const en = appliedEdits.length === 1
+    ? `${cellName(appliedEdits[0].index)} is missing ${appliedTotal} valid notes.`
+    : `${appliedEdits.length} cells are missing valid candidates, with ${appliedTotal} notes to add.`;
   return result("auto-fill-notes", "自動填入筆記", "Auto-Fill Notes",
-    [`有 ${edits.length} 格欠缺有效候選數字，共可補上 ${total} 個筆記。`],
-    [`${edits.length} cells are missing valid candidates, with ${total} notes to add.`],
-    highlights, edits);
+    [zh], [en], highlights, appliedEdits);
 }
 
 function noteError(state: GameState): SmartHint | null {
@@ -124,25 +146,43 @@ function noteError(state: GameState): SmartHint | null {
         [`Note ${invalid} in ${cellName(index)} conflicts with a digit already in its row, column, or box.`],
         [{ index, type: "error" }], [{ index, notes: cell.notes.filter((note) => note !== invalid) }]);
     }
+    const validCandidates = getCandidates(state, index);
+    for (const digit of validCandidates) {
+      if (cell.notes.includes(digit)) continue;
+      const important = units
+        .filter((unit) => unit.indexes.includes(index))
+        .some((unit) => unit.indexes.filter((i) => getCandidates(state, i).includes(digit)).length === 1);
+      if (!important) continue;
+      const nextNotes = [...cell.notes, digit].sort((a, b) => a - b) as Digit[];
+      return result("note-error", "筆記錯誤", "Note Error",
+        [`${cellName(index)} 欠缺關鍵候選數字 ${digit}。`],
+        [`${cellName(index)} is missing the important candidate ${digit}.`],
+        [{ index, type: "eliminate" }], [{ index, notes: nextNotes }]);
+    }
   }
   return null;
 }
 
 function hiddenSingle(state: GameState, puzzle: PuzzleDefinition): SmartHint | null {
-  for (const unit of units) {
-    for (const digit of digits) {
+  const found: { index: number; digit: Digit; unit: Unit; candidateCount: number }[] = [];
+  for (const digit of digits) {
+    for (const unit of units) {
       if (unit.indexes.some((index) => state.cells[index].value === digit)) continue;
       const targets = unit.indexes.filter((index) => getCandidates(state, index).includes(digit));
       if (targets.length === 1) {
         const index = targets[0];
-        return result("hidden-single", "隱性唯一數", "Hidden Single",
-          [`喺${unit.labelZh}入面，只有 ${cellName(index)} 可以填入 ${digit}。`],
-          [`In ${unit.labelEn}, only ${cellName(index)} can contain ${digit}.`],
-          [{ index, type: "key" }], [{ index, value: puzzle.solution[index], notes: [] }]);
+        if (!found.some((item) => item.index === index && item.digit === digit)) {
+          found.push({ index, digit, unit, candidateCount: getCandidates(state, index).length });
+        }
       }
     }
   }
-  return null;
+  if (found.length === 0) return null;
+  const best = found.reduce((current, item) => item.candidateCount < current.candidateCount ? item : current);
+  return result("hidden-single", "隱性唯一數", "Hidden Single",
+    [`喺${best.unit.labelZh}入面，只有 ${cellName(best.index)} 可以填入 ${best.digit}。`],
+    [`In ${best.unit.labelEn}, only ${cellName(best.index)} can contain ${best.digit}.`],
+    [{ index: best.index, type: "key" }], [{ index: best.index, value: puzzle.solution[best.index], notes: [] }]);
 }
 
 function pairHint(state: GameState, hidden: boolean): SmartHint | null {
@@ -179,11 +219,11 @@ function pairHint(state: GameState, hidden: boolean): SmartHint | null {
 }
 
 function intersectionRemoval(state: GameState): SmartHint | null {
-  for (let box = 0; box < 9; box += 1) {
-    const boxUnit = units[18 + box];
-    for (const digit of digits) {
+  for (const digit of digits) {
+    for (let box = 0; box < 9; box += 1) {
+      const boxUnit = units[18 + box];
       const sources = boxUnit.indexes.filter((i) => state.cells[i].value === null && state.cells[i].notes.includes(digit));
-      if (sources.length < 2) continue;
+      if (sources.length < 2 || sources.length > 3) continue;
       const sameRow = sources.every((i) => Math.floor(i / 9) === Math.floor(sources[0] / 9));
       const sameCol = sources.every((i) => i % 9 === sources[0] % 9);
       const targets = sameRow
@@ -197,6 +237,19 @@ function intersectionRemoval(state: GameState): SmartHint | null {
       return result("intersection-removal", "區塊互鎖", "Intersection Removal",
         [`喺${boxUnit.labelZh}，候選數字 ${digit} 全部集中於${lineZh}。`, `因此可以由該${lineZh}其餘紅色格刪除 ${digit}。`],
         [`In ${boxUnit.labelEn}, every candidate ${digit} lies on ${lineEn}.`, `Remove ${digit} from the other red cells on that line.`],
+        [...sources.map((index) => ({ index, type: "key" as const })), ...targets.map((index) => ({ index, type: "eliminate" as const }))],
+        targets.map((index) => ({ index, notes: state.cells[index].notes.filter((n) => n !== digit) })));
+    }
+    for (const line of units.slice(0, 18)) {
+      const sources = line.indexes.filter((i) => state.cells[i].value === null && state.cells[i].notes.includes(digit));
+      if (sources.length < 2 || sources.length > 3 || !sources.every((i) => Math.floor(i / 27) * 3 + Math.floor((i % 9) / 3) === Math.floor(sources[0] / 27) * 3 + Math.floor((sources[0] % 9) / 3))) continue;
+      const sourceBox = Math.floor(sources[0] / 27) * 3 + Math.floor((sources[0] % 9) / 3);
+      const boxUnit = units[18 + sourceBox];
+      const targets = boxUnit.indexes.filter((i) => !line.indexes.includes(i) && state.cells[i].value === null && state.cells[i].notes.includes(digit));
+      if (targets.length === 0) continue;
+      return result("intersection-removal", "區塊互鎖", "Intersection Removal",
+        [`喺${line.labelZh}，候選數字 ${digit} 全部集中於${boxUnit.labelZh}。`, `因此可以由${boxUnit.labelZh}其他紅色格刪除 ${digit}。`],
+        [`In ${line.labelEn}, every candidate ${digit} lies in ${boxUnit.labelEn}.`, `Remove ${digit} from the other red cells in that box.`],
         [...sources.map((index) => ({ index, type: "key" as const })), ...targets.map((index) => ({ index, type: "eliminate" as const }))],
         targets.map((index) => ({ index, notes: state.cells[index].notes.filter((n) => n !== digit) })));
     }
@@ -221,7 +274,7 @@ function lastBlank(state: GameState, puzzle: PuzzleDefinition): SmartHint | null
 function lastRemainingCell(state: GameState, puzzle: PuzzleDefinition): SmartHint | null {
   for (let index = 0; index < 81; index += 1) {
     if (state.cells[index].value !== null) continue;
-    const candidates = getCandidates(state, index);
+    const candidates = state.cells[index].notes;
     if (candidates.length !== 1) continue;
     return result("last-remaining-cell", "唯一候選", "Last Remaining Cell",
       [`${cellName(index)} 只剩一個候選數字 ${candidates[0]}。`],
@@ -239,9 +292,21 @@ export function findSmartHint(state: GameState, puzzle: PuzzleDefinition): Smart
     ?? hiddenSingle(state, puzzle)
     ?? pairHint(state, false)
     ?? pairHint(state, true)
+    ?? findNakedSubsetHint(state, 3)
+    ?? findHiddenSubsetHint(state, 3)
+    ?? findNakedSubsetHint(state, 4)
+    ?? findHiddenSubsetHint(state, 4)
     ?? intersectionRemoval(state)
     ?? lastBlank(state, puzzle)
-    ?? lastRemainingCell(state, puzzle);
+    ?? lastRemainingCell(state, puzzle)
+    ?? findColorHint(state, false)
+    ?? findColorHint(state, true)
+    ?? findFishHint(state, 2)
+    ?? findFishHint(state, 3)
+    ?? findFishHint(state, 4)
+    ?? findXCycleHint(state)
+    ?? findWingHint(state, false)
+    ?? findWingHint(state, true);
 }
 
 export function applySmartHint(state: GameState, puzzle: PuzzleDefinition, hint: SmartHint): GameState {
