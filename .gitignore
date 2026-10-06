@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# local environment
+.env
+.env.*
+!.env.example
+
+# editor and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# native build products and credentials
+android/.gradle/
+android/local.properties
+android/app/build/
+ios/App/DerivedData/
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Unity reference material must not be copied wholesale
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+UserSettings/
