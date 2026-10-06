@@ -155,13 +155,23 @@ export function applyGameEdits(
   if (state.completed || edits.length === 0) return state;
 
   const byIndex = new Map(edits.map((edit) => [edit.index, edit]));
+  const placements = edits.filter((edit): edit is GameEdit & { value: Digit } =>
+    edit.value !== undefined && edit.value !== null,
+  );
   const cells = state.cells.map((cell, index): GameCell => {
     const edit = byIndex.get(index);
-    if (!edit || cell.given) return copyCell(cell);
-    return {
+    const editedCell = !edit || cell.given ? copyCell(cell) : {
       ...copyCell(cell),
       value: edit.value === undefined ? cell.value : edit.value,
       notes: edit.notes === undefined ? [...cell.notes] : [...edit.notes],
+    };
+    const notes = editedCell.value === null
+      ? editedCell.notes.filter((note) => !placements.some((placement) =>
+          placement.value === note && arePeers(index, placement.index)))
+      : [];
+    return {
+      ...editedCell,
+      notes,
     };
   });
   const next = withHistory(state, cells);

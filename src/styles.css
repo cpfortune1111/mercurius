@@ -129,8 +129,8 @@ button:focus-visible { outline: 3px solid #f7cf68; outline-offset: 3px; }
 .record-list strong { color: var(--accent); }
 
 .completion-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; padding: 20px; place-items: center; background: rgb(1 13 20 / 82%); backdrop-filter: blur(10px); }
-.hint-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; padding: 20px clamp(20px, 5vw, 72px); place-items: center end; background: rgb(1 13 20 / 50%); backdrop-filter: blur(2px); }
-.hint-window { position: relative; width: min(420px, 100%); padding: 34px; border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent); border-radius: 26px; background: color-mix(in srgb, var(--panel-solid) 94%, transparent); box-shadow: 0 30px 100px rgb(0 0 0 / 55%); }
+.hint-backdrop { position: absolute; z-index: 5; top: 70px; right: 0; width: 310px; pointer-events: none; }
+.hint-window { position: relative; width: 100%; padding: 30px; pointer-events: auto; border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent); border-radius: 26px; background: var(--panel-solid); box-shadow: 0 22px 70px rgb(0 0 0 / 38%); }
 .hint-close { position: absolute; top: 13px; right: 13px; width: 36px; height: 36px; cursor: pointer; color: var(--muted); font-size: 1.7rem; background: transparent; border: 0; }
 .hint-symbol { display: grid; width: 58px; height: 58px; margin-bottom: 20px; place-items: center; color: var(--bg-deep); font-size: 1.7rem; background: var(--accent-2); border-radius: 50%; box-shadow: 0 0 28px color-mix(in srgb, var(--accent-2) 35%, transparent); }
 .hint-window h2 { margin: 0; font-family: "Marcellus", Georgia, serif; font-size: 2rem; font-weight: 400; }
@@ -183,7 +183,7 @@ button:focus-visible { outline: 3px solid #f7cf68; outline-offset: 3px; }
   .difficulty-grid { grid-template-columns: repeat(2, 1fr); }
   .play-layout { grid-template-columns: minmax(0, 600px); }
   .game-controls { width: min(520px, 100%); margin: auto; }
-  .hint-backdrop { align-items: end; justify-items: center; background: rgb(1 13 20 / 58%); }
+  .hint-backdrop { position: static; width: min(520px, 100%); margin: 18px auto 0; }
 }
 
 @media (max-width: 700px) {
@@ -231,7 +231,6 @@ button:focus-visible { outline: 3px solid #f7cf68; outline-offset: 3px; }
   .number-pad button { min-height: 43px; padding: 0; font-size: 1.2rem; border-radius: 8px; }
   .tool-row button span { width: 38px; height: 38px; }
   .completion-card { padding: 30px 20px; }
-  .hint-backdrop { padding: 12px; }
   .hint-window { padding: 27px 22px 22px; border-radius: 22px; }
   .hint-symbol { width: 46px; height: 46px; margin-bottom: 14px; }
   .hint-window h2 { font-size: 1.65rem; }

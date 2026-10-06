@@ -47,7 +47,7 @@ describe("legacy smart hint flow", () => {
     const hint = findSmartHint(state, definition);
 
     expect(hint?.strategy).toBe("auto-fill-notes");
-    expect(hint?.copy["zh-Hant"].pages).toHaveLength(2);
+    expect(hint?.copy["zh-Hant"].pages).toHaveLength(1);
     expect(state.cells[0].notes).toEqual([]);
 
     const applied = applySmartHint(state, definition, hint!);

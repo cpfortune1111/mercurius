@@ -103,8 +103,8 @@ function autoFillNotes(state: GameState): SmartHint | null {
   const total = edits.reduce((sum, edit) => sum + (edit.notes!.length - state.cells[edit.index].notes.length), 0);
   const highlights = edits.map(({ index }) => ({ index, type: "auxiliary" as const }));
   return result("auto-fill-notes", "自動填入筆記", "Auto-Fill Notes",
-    [`有 ${edits.length} 格欠缺有效候選數字，共可補上 ${total} 個筆記。`, "套用後只會補齊有效筆記，唔會直接填答案。"],
-    [`${edits.length} cells are missing valid candidates, with ${total} notes to add.`, "Apply fills valid notes only; it does not reveal an answer."],
+    [`有 ${edits.length} 格欠缺有效候選數字，共可補上 ${total} 個筆記。`],
+    [`${edits.length} cells are missing valid candidates, with ${total} notes to add.`],
     highlights, edits);
 }
 

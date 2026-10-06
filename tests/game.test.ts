@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyGameEdits,
   createGame,
   eraseCell,
   getCandidates,
@@ -58,6 +59,22 @@ describe("game state", () => {
     state = placeDigit(state, puzzle, 0, 5);
 
     expect(state.cells[0].value).toBe(5);
+    expect(state.cells[1].notes).not.toContain(5);
+    expect(state.cells[9].notes).not.toContain(5);
+    expect(state.cells[10].notes).not.toContain(5);
+    expect(state.cells[40].notes).toContain(5);
+  });
+
+  it("removes peer notes when a hint applies a solved digit", () => {
+    const puzzle = puzzleWithGivens();
+    let state = createGame(puzzle);
+    state = toggleNote(state, 1, 5);
+    state = toggleNote(state, 9, 5);
+    state = toggleNote(state, 10, 5);
+    state = toggleNote(state, 40, 5);
+
+    state = applyGameEdits(state, puzzle, [{ index: 0, value: 5, notes: [] }]);
+
     expect(state.cells[1].notes).not.toContain(5);
     expect(state.cells[9].notes).not.toContain(5);
     expect(state.cells[10].notes).not.toContain(5);

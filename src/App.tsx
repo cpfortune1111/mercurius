@@ -430,7 +430,7 @@ export function App() {
             const localizedHint = activeHint.copy[locale];
             const lastPage = localizedHint.pages.length - 1;
             return (
-              <div className="hint-backdrop" role="dialog" aria-modal="true" aria-labelledby="hint-title">
+              <div className="hint-backdrop" role="dialog" aria-labelledby="hint-title">
                 <div className="hint-window">
                   <button className="hint-close" type="button" onClick={() => setActiveHint(null)} aria-label={text.hintClose}>×</button>
                   <span className="hint-symbol">✦</span>
