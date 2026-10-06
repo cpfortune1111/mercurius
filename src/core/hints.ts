@@ -90,11 +90,15 @@ function incorrectAnswer(state: GameState, puzzle: PuzzleDefinition): SmartHint 
     [{ index, type: "error" }], [{ index, value: null, notes: [] }]);
 }
 
-function autoFillNotes(state: GameState): SmartHint | null {
+function autoFillNotes(state: GameState, puzzle: PuzzleDefinition): SmartHint | null {
+  const cellsMissingAnswer = state.cells
+    .map((cell, index) => ({ cell, index }))
+    .filter(({ cell, index }) =>
+      !cell.given && cell.value === null && !cell.notes.includes(puzzle.solution[index]));
+  if (cellsMissingAnswer.length === 0) return null;
+
   const edits: GameEdit[] = [];
-  for (let index = 0; index < 81; index += 1) {
-    const cell = state.cells[index];
-    if (cell.given || cell.value !== null) continue;
+  for (const { cell, index } of cellsMissingAnswer) {
     const candidates = getCandidates(state, index);
     const notes = [...new Set([...cell.notes, ...candidates])].sort((a, b) => a - b) as Digit[];
     if (notes.length !== cell.notes.length) edits.push({ index, notes });
@@ -230,7 +234,7 @@ function lastRemainingCell(state: GameState, puzzle: PuzzleDefinition): SmartHin
 export function findSmartHint(state: GameState, puzzle: PuzzleDefinition): SmartHint | null {
   if (state.completed) return null;
   return incorrectAnswer(state, puzzle)
-    ?? autoFillNotes(state)
+    ?? autoFillNotes(state, puzzle)
     ?? noteError(state)
     ?? hiddenSingle(state, puzzle)
     ?? pairHint(state, false)

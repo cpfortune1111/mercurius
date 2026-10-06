@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGame, placeDigit } from "../src/core/game";
+import { applyGameEdits, createGame, placeDigit } from "../src/core/game";
 import { applySmartHint, findSmartHint } from "../src/core/hints";
 import type { Digit, PuzzleDefinition } from "../src/core/types";
 
@@ -65,5 +65,20 @@ describe("legacy smart hint flow", () => {
 
     expect(solveHint?.strategy).toBe("hidden-single");
     expect(solveHint?.edits[0].value).toBe(5);
+  });
+
+  it("does not restore a candidate removed by a solving strategy", () => {
+    const definition = puzzle(Array.from({ length: 81 }, (_, index) => index));
+    const initial = createGame(definition);
+    const autoFill = findSmartHint(initial, definition)!;
+    const noted = applySmartHint(initial, definition, autoFill);
+    const afterPairElimination = applyGameEdits(noted, definition, [{
+      index: 40,
+      notes: noted.cells[40].notes.filter((note) => note !== 4),
+    }]);
+
+    expect(afterPairElimination.cells[40].notes).not.toContain(4);
+    expect(afterPairElimination.cells[40].notes).toContain(solution[40]);
+    expect(findSmartHint(afterPairElimination, definition)?.strategy).not.toBe("auto-fill-notes");
   });
 });

@@ -308,13 +308,32 @@ export function App() {
   }
 
   useEffect(() => {
-    if (screen !== "game" || activeHint) return;
+    if (screen !== "game") return;
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (settingsOpen) {
+          setSettingsOpen(false);
+        } else if (activeHint) {
+          setActiveHint(null);
+          setHintPage(0);
+        } else {
+          goHome();
+        }
+        return;
+      }
+      if (activeHint || settingsOpen) return;
       if (/^[1-9]$/.test(event.key)) enterDigit(Number(event.key) as Digit);
-      if ((event.key === "Backspace" || event.key === "Delete") && activeGame && selected !== null) {
+      if (event.key === "Backspace" && activeGame) {
+        event.preventDefault();
+        commitGame(undo(activeGame.state));
+      }
+      if (event.key === "Delete" && activeGame && selected !== null) {
+        event.preventDefault();
         commitGame(eraseCell(activeGame.state, selected));
       }
       if (event.key.toLowerCase() === "n") setNotesMode((value) => !value);
+      if (event.key.toLowerCase() === "h") useHint();
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z" && activeGame) {
         event.preventDefault();
         commitGame(undo(activeGame.state));
@@ -322,7 +341,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [screen, activeGame, selected, notesMode, activeHint]);
+  }, [screen, activeGame, selected, notesMode, activeHint, settingsOpen]);
 
   function cycleSkin() {
     setSkin((current) => skins[(skins.indexOf(current) + 1) % skins.length]);
@@ -393,7 +412,7 @@ export function App() {
       {screen === "game" && activeGame && puzzle && (
         <section className="game-screen">
           <div className="game-heading">
-            <button className="back-button" type="button" onClick={goHome}>←</button>
+            <button className="back-button" type="button" onClick={goHome} aria-keyshortcuts="Escape">←</button>
             <div><span>{text[activeGame.difficulty]}</span><strong>{formatTime(activeGame.elapsed)}</strong></div>
             <div className="game-status-actions">
               <div className="mistake-count"><strong>{activeGame.state.mistakes}</strong><small>{text.mistakes}</small></div>
@@ -418,10 +437,10 @@ export function App() {
             </div>
             <aside className="game-controls">
               <div className="tool-row">
-                <button type="button" onClick={() => commitGame(undo(activeGame.state))}><span>↶</span>{text.undo}</button>
-                <button type="button" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span>⌫</span>{text.erase}</button>
-                <button className={notesMode ? "is-active" : ""} type="button" onClick={() => setNotesMode((value) => !value)}><span>✎</span>{text.notes}</button>
-                <button type="button" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon">✦<em>{hints}</em></span>{text.hint}</button>
+                <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span>↶</span>{text.undo}</button>
+                <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span>⌫</span>{text.erase}</button>
+                <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span>✎</span>{text.notes}</button>
+                <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon">✦<em>{hints}</em></span>{text.hint}</button>
               </div>
               <div className="number-pad">{digits.map((digit) => <button className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
               {hints === 0 && <div className="reward-card"><strong>{text.rewardHint}</strong><small>{text.prototypeAd}</small></div>}
