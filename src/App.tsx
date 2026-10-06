@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { HINT_COST, INITIAL_HINTS, REWARDED_AD_HINTS } from "./application/rules";
 import { referencePuzzles } from "./content/reference-puzzles";
 import { createGame, eraseCell, isAutoFillAvailable, placeDigit, toggleNote, undo } from "./core/game";
@@ -20,6 +20,8 @@ interface SavedGame {
 interface Records {
   completed: number;
   best: Partial<Record<Difficulty, number>>;
+  completedByDifficulty: Partial<Record<Difficulty, number>>;
+  totalTimeByDifficulty: Partial<Record<Difficulty, number>>;
 }
 
 interface Preferences {
@@ -39,6 +41,12 @@ const toneIcons: Readonly<Record<Tone, string>> = {
   light: "/icon-theme.png",
   dark: "/icon-theme-dark.png",
   superdark: "/icon-theme-superdark.png",
+};
+const difficultyIcons: Readonly<Record<Difficulty, string>> = {
+  easy: "/icon-diff-easy.png",
+  medium: "/icon-diff-medium.png",
+  hard: "/icon-diff-hard.png",
+  expert: "/icon-diff-expert.png",
 };
 const storage = {
   game: "mercurius.active-game.v1",
@@ -98,7 +106,10 @@ const copy = {
     backHome: "返回主頁",
     playAgain: "再玩一局",
     totalCompleted: "完成棋局",
-    bestTimes: "各難度最佳時間",
+    bestTimes: "各難度紀錄",
+    bestTime: "最佳時間",
+    averageTime: "平均完成時間",
+    completedCount: "完成次數",
     noRecord: "尚未有紀錄",
     rewardHint: `觀看獎勵廣告 +${REWARDED_AD_HINTS} 提示`,
     prototypeAd: "廣告接口將於封裝階段接駁",
@@ -151,7 +162,10 @@ const copy = {
     backHome: "Back home",
     playAgain: "Play another",
     totalCompleted: "Puzzles completed",
-    bestTimes: "Personal bests",
+    bestTimes: "Records by difficulty",
+    bestTime: "Best time",
+    averageTime: "Average time",
+    completedCount: "Completed",
     noRecord: "No record yet",
     rewardHint: `Watch rewarded ad +${REWARDED_AD_HINTS} hints`,
     prototypeAd: "Ad integration arrives with the app wrapper",
@@ -172,6 +186,25 @@ function formatTime(seconds: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function readRecords(): Records {
+  const saved = readJson<Partial<Records>>(storage.records, {});
+  const best = saved.best ?? {};
+  const completedByDifficulty = { ...(saved.completedByDifficulty ?? {}) };
+  const totalTimeByDifficulty = { ...(saved.totalTimeByDifficulty ?? {}) };
+  for (const difficulty of difficulties) {
+    if (completedByDifficulty[difficulty] === undefined && best[difficulty] !== undefined) {
+      completedByDifficulty[difficulty] = 1;
+      totalTimeByDifficulty[difficulty] = best[difficulty];
+    }
+  }
+  return {
+    completed: saved.completed ?? 0,
+    best,
+    completedByDifficulty,
+    totalTimeByDifficulty,
+  };
+}
+
 function GameLogo() {
   return (
     <img className="game-logo" src="/mercurius-sudoku-logo.png" alt="Mercurius Sudoku" />
@@ -181,8 +214,57 @@ function GameLogo() {
 function Toggle({ value, onChange, label }: { value: boolean; onChange: () => void; label: string }) {
   return (
     <button className="toggle-button" type="button" role="switch" aria-checked={value} aria-label={label} onClick={onChange}>
+      <span>{value ? "ON" : "OFF"}</span>
       <img src={value ? "/icon-on.png" : "/icon-off.png"} alt={value ? "On" : "Off"} />
     </button>
+  );
+}
+
+interface TouchSpark {
+  id: number;
+  x: number;
+  y: number;
+}
+
+function TouchFx() {
+  const [sparks, setSparks] = useState<TouchSpark[]>([]);
+  const nextId = useRef(0);
+  const pointerActive = useRef(false);
+  const lastTrigger = useRef(-999);
+
+  useEffect(() => {
+    const spawn = (event: PointerEvent) => {
+      const now = performance.now();
+      if (now - lastTrigger.current < 150) return;
+      lastTrigger.current = now;
+      const id = nextId.current++;
+      setSparks((current) => [...current.slice(-10), { id, x: event.clientX, y: event.clientY }]);
+      window.setTimeout(() => setSparks((current) => current.filter((spark) => spark.id !== id)), 900);
+    };
+    const onDown = (event: PointerEvent) => { pointerActive.current = true; spawn(event); };
+    const onMove = (event: PointerEvent) => { if (pointerActive.current) spawn(event); };
+    const onUp = () => { pointerActive.current = false; };
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerup", onUp, { passive: true });
+    window.addEventListener("pointercancel", onUp, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, []);
+
+  return (
+    <div className="touch-fx-layer" aria-hidden="true">
+      {sparks.map((spark) => (
+        <span className="touch-spark" key={spark.id} style={{ left: spark.x, top: spark.y }}>
+          <img className="touch-spark__bubble" src="/spark-bubble.png" alt="" />
+          <img className="touch-spark__sign" src="/spark-mercury-sign.png" alt="" />
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -195,9 +277,7 @@ export function App() {
     import.meta.env.DEV ? DEV_HINTS : readJson(storage.hints, INITIAL_HINTS),
   );
   const [activeGame, setActiveGame] = useState<SavedGame | null>(() => readJson(storage.game, null));
-  const [records, setRecords] = useState<Records>(() =>
-    readJson(storage.records, { completed: 0, best: {} }),
-  );
+  const [records, setRecords] = useState<Records>(readRecords);
   const [selected, setSelected] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
   const [activeHint, setActiveHint] = useState<SmartHint | null>(null);
@@ -290,6 +370,14 @@ export function App() {
             [activeGame.difficulty]: existing === undefined
               ? activeGame.elapsed
               : Math.min(existing, activeGame.elapsed),
+          },
+          completedByDifficulty: {
+            ...current.completedByDifficulty,
+            [activeGame.difficulty]: (current.completedByDifficulty[activeGame.difficulty] ?? 0) + 1,
+          },
+          totalTimeByDifficulty: {
+            ...current.totalTimeByDifficulty,
+            [activeGame.difficulty]: (current.totalTimeByDifficulty[activeGame.difficulty] ?? 0) + activeGame.elapsed,
           },
         };
       });
@@ -404,6 +492,7 @@ export function App() {
   return (
     <main className="app" data-skin={skin} data-tone={tone}>
       <div className="stars" aria-hidden="true" />
+      <TouchFx />
       {header}
 
       {screen === "home" && (
@@ -432,7 +521,7 @@ export function App() {
           <div className="difficulty-grid">
             {difficulties.map((difficulty, index) => (
               <button className={`difficulty-card difficulty-card--${difficulty}`} type="button" key={difficulty} onClick={() => startGame(difficulty)}>
-                <span className="difficulty-orbit">{index + 1}</span>
+                <span className="difficulty-orbit"><img src={difficultyIcons[difficulty]} alt="" /></span>
                 <strong>{text[difficulty]}</strong>
                 <small>{text[`${difficulty}Desc` as `${Difficulty}Desc`]}</small>
                 <i>{"●".repeat(index + 1)}{"○".repeat(3 - index)}</i>
@@ -479,10 +568,10 @@ export function App() {
                 </button>
               ) : (
                 <div className="tool-row">
-                  <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span>↶</span>{text.undo}</button>
-                  <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span>⌫</span>{text.erase}</button>
-                  <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span>✎</span>{text.notes}</button>
-                  <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon">✦<em>{hints}</em></span>{text.hint}</button>
+                  <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span><img src="/icon-refresh.png" alt="" /></span>{text.undo}</button>
+                  <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span><img src="/icon-eraser.png" alt="" /></span>{text.erase}</button>
+                  <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span><img src="/icon-notes.png" alt="" /></span>{text.notes}</button>
+                  <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon"><img src="/icon-hint.png" alt="" /><em>{hints}</em></span>{text.hint}</button>
                 </div>
               )}
               <div className="number-pad">{digits.map((digit) => <button disabled={autoFilling || activeGame.state.completed} className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
@@ -533,7 +622,16 @@ export function App() {
           <p className="eyebrow">PERSONAL LOG</p><h1>{text.records}</h1>
           <div className="record-total"><span>☿</span><strong>{records.completed}</strong><small>{text.totalCompleted}</small></div>
           <h2>{text.bestTimes}</h2>
-          <div className="record-list">{difficulties.map((difficulty) => <div key={difficulty}><span>{text[difficulty]}</span><strong>{records.best[difficulty] === undefined ? text.noRecord : formatTime(records.best[difficulty]!)}</strong></div>)}</div>
+          <div className="record-list">{difficulties.map((difficulty) => {
+            const count = records.completedByDifficulty[difficulty] ?? 0;
+            const average = count > 0 ? Math.round((records.totalTimeByDifficulty[difficulty] ?? 0) / count) : null;
+            return <div className="record-row" key={difficulty}>
+              <strong className="record-row__level">{text[difficulty]}</strong>
+              <span><small>{text.bestTime}</small><b>{records.best[difficulty] === undefined ? text.noRecord : formatTime(records.best[difficulty]!)}</b></span>
+              <span><small>{text.averageTime}</small><b>{average === null ? text.noRecord : formatTime(average)}</b></span>
+              <span><small>{text.completedCount}</small><b>{count}</b></span>
+            </div>;
+          })}</div>
         </section>
       )}
 
@@ -543,8 +641,7 @@ export function App() {
             <button className="settings-close" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close">×</button>
             <h2>{text.settings}</h2>
             <div className="sound-master">
-              <img src="/icon-music.png" alt="" />
-              <strong>{text.sound}</strong>
+              <span className="sound-master__title"><strong>{text.sound}</strong><img src="/icon-music.png" alt="" /></span>
               <Toggle value={preferences.sound} label={text.sound} onChange={() => setPreferences((current) => ({ ...current, sound: !current.sound }))} />
             </div>
             <div className={`volume-controls ${preferences.sound ? "" : "is-disabled"}`}>
