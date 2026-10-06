@@ -147,6 +147,8 @@ Advanced strategies are post-MVP.
 ### Hint currency and advertising
 
 - Hints remain a spendable local currency
+- A new player starts with 10 hints
+- Each applied hint costs 1 hint
 - A rewarded advertisement grants exactly 3 hints after a verified completion callback
 - Banner advertising remains in the product
 - Puzzle completion, missions, streaks, and other gameplay events do not grant hints
@@ -314,8 +316,5 @@ The MVP is ready when:
 
 ## 15. Remaining decisions
 
-- Exact weekday-to-difficulty curve for Daily Challenge
-- Definitions and completion conditions for mission IDs A01, A02, A03, B01, and B03
-- Starting hint balance and the hint cost of each action
 - Final public logo treatment
 - Whether the original music and sound effects will be reused after web compression tests

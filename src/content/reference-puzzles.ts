@@ -1,10 +1,11 @@
-import type { LegacyPuzzleDefinition } from "../../src/core/types";
+import { convertLegacyPuzzle } from "../core/legacy";
+import type { Difficulty, LegacyPuzzleDefinition, PuzzleDefinition } from "../core/types";
 
 function tokens(value: string): string[] {
   return value.split(",");
 }
 
-export const legacyPuzzles: readonly LegacyPuzzleDefinition[] = [
+export const legacyReferencePuzzles: readonly LegacyPuzzleDefinition[] = [
   {
     id: "puzzle_863444034",
     groupId: "easy",
@@ -38,3 +39,7 @@ export const legacyPuzzles: readonly LegacyPuzzleDefinition[] = [
     boardData: tokens("t1,0,7,4,3,t8,6,t2,5,4,2,6,t7,0,5,t8,t3,1,t5,8,3,t6,1,t2,4,0,t7,2,5,t8,3,t4,t7,1,t6,t0,7,t6,1,8,2,t0,5,4,3,0,t3,4,5,6,1,t7,t8,2,3,t7,t0,1,8,t6,2,5,4,6,t4,5,2,7,t3,t0,t1,8,8,1,2,0,5,4,t3,7,t6"),
   },
 ];
+
+export const referencePuzzles: Readonly<Record<Difficulty, PuzzleDefinition>> = Object.fromEntries(
+  legacyReferencePuzzles.map((legacy) => [legacy.groupId, convertLegacyPuzzle(legacy)]),
+) as Readonly<Record<Difficulty, PuzzleDefinition>>;

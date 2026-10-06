@@ -13,14 +13,19 @@ Last updated: 2026-10-06
 
 - The date comes from a minimal authoritative server-date endpoint
 - All players receive the same puzzle for the same date
-- Difficulty follows a fixed weekday curve
+- Difficulty follows a fixed weekday curve:
+  - Monday: Easy
+  - Tuesday: Medium
+  - Wednesday: Hard
+  - Thursday: Expert
+  - Friday: Hard
+  - Saturday: Medium
+  - Sunday: Easy
 - A Daily puzzle cannot be restarted
 - An unfinished Daily puzzle can be continued
 - Only the first completion grants rewards
 - First completion grants 5 Mercury Points and that day's Calendar stamp
 - Missed dates cannot be backfilled or stamped later
-
-The exact weekday-to-difficulty mapping still needs to be recorded before implementation.
 
 ## Calendar and stamp rewards
 
@@ -31,13 +36,21 @@ The exact weekday-to-difficulty mapping still needs to be recorded before implem
 
 ## Missions and Mercury Points
 
-- Final mission pool IDs: A01, A02, A03, B01, and B03
+- One Category A mission and one Category B mission are active for the day
+- Each completed category mission grants 5 MP
+- Completing both active missions grants an additional 5 MP
+- Final mission pool:
+  - A01: complete one Medium-or-higher puzzle
+  - A02: complete one Hard-or-higher puzzle
+  - A03: complete one Expert puzzle
+  - B01: complete one puzzle without using a Hint
+  - B03: complete one puzzle without mistakes
 - Maximum Mercury Points earned from daily activity: 20 MP per day
 - Weekly Missions are removed
 - Public ranking is removed
 - Competitive anti-cheat is removed
 
-The exact definition and completion condition of each retained mission ID still needs to be copied from the approved prior design or source reference.
+Daily MP composition is fixed at: Daily Challenge 5 MP + Category A 5 MP + Category B 5 MP + Complete All 5 MP.
 
 ## Themes
 
