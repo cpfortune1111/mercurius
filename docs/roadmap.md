@@ -54,6 +54,9 @@ Deliverables:
 - Light and dark visual tokens
 - Keyboard and pointer input
 - Temporary in-memory game state
+- Localized Traditional Chinese and English shell
+- Unlimited-error behavior
+- Automatic peer-note removal
 
 Acceptance:
 
@@ -76,6 +79,9 @@ Deliverables:
 - PWA installation and offline behavior
 - Error recovery
 - End-to-end tests
+- Hint currency
+- Banner advertising adapter
+- Rewarded advertising flow that grants 3 hints
 
 Acceptance:
 
@@ -107,12 +113,19 @@ Acceptance:
 Possible deliverables after prioritization:
 
 - Expanded curated puzzle packs
-- Daily Challenge
-- Streaks
-- Achievements
+- Daily Challenge using authoritative server date
+- Calendar stamps and Mercury Points
+- Mission pool A01, A02, A03, B01, and B03
+- Four initially available themes and future 100 MP theme unlocks
 - Richer progress views
 - Background puzzle generation
 - Data export and import improvements
+
+Phase-five exclusions:
+
+- Weekly Missions
+- Public ranking
+- Competitive anti-cheat systems
 
 Acceptance criteria are defined when features enter scope.
 

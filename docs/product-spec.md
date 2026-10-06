@@ -119,6 +119,8 @@ No login is required for the first release.
 - Touch and pointer controls
 - Configurable mistake display
 - Configurable hiding of completed number buttons
+- Unlimited mistakes; mistakes never end a game
+- Placing a number automatically removes the same candidate from notes in its row, column, and box
 
 ### Save and resume
 
@@ -141,6 +143,15 @@ MVP includes:
 - Hidden single
 
 Advanced strategies are post-MVP.
+
+### Hint currency and advertising
+
+- Hints remain a spendable local currency
+- A rewarded advertisement grants exactly 3 hints after a verified completion callback
+- Banner advertising remains in the product
+- Puzzle completion, missions, streaks, and other gameplay events do not grant hints
+- Reward grants must be idempotent so a repeated callback cannot duplicate hints
+- Advertising is implemented through a platform adapter and never imported by the Sudoku engine
 
 ### Statistics
 
@@ -167,7 +178,7 @@ Overall:
 - Theme
 - Show mistakes
 - Hide completed numbers
-- Language
+- Language: Traditional Chinese or English
 - Reduced motion
 - Data reset
 
@@ -187,7 +198,8 @@ Overall:
 - Simple coloring and color wrap
 - X-Cycle
 - XY-Wing and XYZ-Wing
-- Daily Challenge
+- Daily Challenge and Calendar
+- Missions and Mercury Points progression
 - Achievements and richer progress charts
 - Background puzzle generation in a Web Worker
 - Additional visual themes
@@ -203,9 +215,14 @@ Overall:
 - Cloud synchronization
 - Real-money competition
 - Subscription plans
-- Runtime advertising
 - In-app purchases
 - One-to-one reproduction of Unity screens or internal classes
+- Daily Challenge, Calendar stamps, and Missions
+- Weekly Missions
+- Public ranking and leaderboards
+- Competitive anti-cheat systems
+
+Banner and rewarded advertising remain in MVP scope, but are integrated after the ad-free game loop and persistence are stable.
 
 ## 9. Visual direction
 
@@ -226,6 +243,14 @@ Redesign:
 - Establish a clear type scale and spacing system
 - Avoid text baked into images
 - Support long translated labels without clipping
+
+The Home screen evolves the original composition rather than replacing its identity:
+
+- Retain the existing top bar concept
+- Present three primary actions in the central area
+- Reserve the left-side navigation area for Missions and Calendar when phase-two features are enabled
+- Keep four themes available from the initial release
+- Future unlockable themes cost 100 Mercury Points each
 
 ## 10. Localization and accessibility
 
@@ -250,6 +275,8 @@ Initial direction:
 - Preserve stable puzzle IDs across updates
 - Validate every bundled puzzle for one solution
 - Difficulty must be based on required solving techniques, not clue count alone
+- Preserve the original Easy, Medium, Hard, and Expert generator behavior as the reference
+- When a difficulty has fewer than 10 unseen puzzles, generate 10 additional puzzles
 
 The original Unity JSON files may be converted after validation. They are reference data, not the permanent storage schema.
 
@@ -273,15 +300,22 @@ The MVP is ready when:
 - Lighthouse and real-device checks show acceptable startup and interaction performance
 - A production build can be packaged by Capacitor without changing game logic
 
-## 14. Open product decisions
+## 14. Confirmed product decisions
 
-These require owner approval before visual implementation is locked:
+- Supported default languages: Traditional Chinese and English
+- Mistakes are unlimited
+- A placed number removes matching notes from its row, column, and box
+- Hints remain a currency; a completed rewarded advertisement grants 3 hints
+- Daily Challenge belongs to phase two
+- The Mercurius visual identity is retained and modernized
+- The first four themes are available immediately
+- Records remain personal statistics only
+- The application is local-first and any backend remains deliberately minimal
 
-- Final public product name and logo treatment
-- Traditional Chinese, English, or bilingual default
-- Whether mistakes are unlimited or an optional three-mistake mode
-- Whether notes are removed automatically when a number is placed
-- Whether hints use currency in the web MVP
-- Whether Daily Challenge belongs in MVP or the next release
-- Whether the original music and sound effects will be reused
-- Whether the initial visual direction should be evolutionary or a stronger redesign
+## 15. Remaining decisions
+
+- Exact weekday-to-difficulty curve for Daily Challenge
+- Definitions and completion conditions for mission IDs A01, A02, A03, B01, and B03
+- Starting hint balance and the hint cost of each action
+- Final public logo treatment
+- Whether the original music and sound effects will be reused after web compression tests

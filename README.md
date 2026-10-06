@@ -15,14 +15,31 @@ The new edition keeps the strongest parts of the original project—Sudoku rules
 
 ## Current status
 
-The repository is in the product-definition stage. Implementation has not started.
+Foundation implementation has started. The repository now contains:
+
+- A Vite, React, and TypeScript application shell
+- A platform-independent Sudoku core
+- Legacy Unity puzzle conversion
+- Reference fixtures from all four original difficulties
+- Automated tests for input, notes, mistakes, undo, candidates, completion, and legacy conversion
 
 Read the project documents before development:
 
 - [Product specification](docs/product-spec.md)
 - [Technical architecture](docs/architecture.md)
 - [Delivery roadmap](docs/roadmap.md)
+- [Phase-two progression rules](docs/phase-two-rules.md)
+- [Unity source audit](docs/legacy-audit.md)
 - [Architecture decision: web-first remake](docs/decisions/0001-web-first-remake.md)
+
+## Local development
+
+Requirements: Node.js and pnpm.
+
+1. Install dependencies with pnpm install.
+2. Start the development server with pnpm dev.
+3. Run the test suite with pnpm test:run.
+4. Create a production build with pnpm build.
 
 ## Initial technology direction
 

@@ -296,6 +296,14 @@ Before Smart Hint migration:
 - Finalize semantic hint result types
 - Define expected behavior for notes and applied hints
 
+Resolved on 2026-10-06:
+
+- Traditional Chinese and English are the initial languages
+- Mistakes are unlimited
+- Placing a digit removes the same note from all row, column, and box peers
+- Daily Challenge is phase two
+- Hints remain a currency and a rewarded advertisement grants 3 hints
+
 Before Capacitor work:
 
 - Web MVP passes real mobile browser tests
