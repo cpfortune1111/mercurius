@@ -298,8 +298,8 @@ button:focus-visible { outline: 3px solid #f7cf68; outline-offset: 3px; }
   inset: 0;
   content: "";
   pointer-events: none;
-  border: 66px solid transparent;
-  border-image: url("/popup-bkg-v3.png") 64 fill / 66px stretch;
+  border: 72.6px solid transparent;
+  border-image: url("/popup-bkg-v3.png") 64 fill / 72.6px stretch;
 }
 .hint-meter-mask {
   position: absolute !important;
@@ -434,7 +434,7 @@ button:focus-visible { outline: 3px solid #f7cf68; outline-offset: 3px; }
   .tool-row button span { width: 38px; height: 38px; }
   .completion-card { padding: 30px 20px; }
   .hint-window { padding: 22px 16px 18px; }
-  .hint-window::before { border-width: 54px; border-image-width: 54px; }
+  .hint-window::before { border-width: 59.4px; border-image-width: 59.4px; }
   .hint-window::after { inset: 0; border-width: 60px; border-image-width: 60px; }
   .hint-window h2 { font-size: 1.65rem; }
   .hint-explanation { min-height: 74px; font-size: .94rem; }
