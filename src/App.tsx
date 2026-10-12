@@ -7,7 +7,6 @@ import type { Difficulty, Digit, GameState } from "./core/types";
 
 type Locale = "zh-Hant" | "en";
 type Screen = "home" | "difficulty" | "game" | "records";
-type Skin = "mercury" | "aurora" | "dawn" | "graphite";
 type Tone = "light" | "dark" | "superdark";
 
 interface SavedGame {
@@ -35,7 +34,6 @@ interface Preferences {
 const digits: readonly Digit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const DEV_HINTS = 9999;
 const difficulties: readonly Difficulty[] = ["easy", "medium", "hard", "expert"];
-const skins: readonly Skin[] = ["mercury", "aurora", "dawn", "graphite"];
 const tones: readonly Tone[] = ["light", "dark", "superdark"];
 const toneIcons: Readonly<Record<Tone, string>> = {
   light: "/icon-theme.png",
@@ -52,7 +50,6 @@ const storage = {
   game: "mercurius.active-game.v1",
   hints: "mercurius.hints.v1",
   records: "mercurius.records.v1",
-  theme: "mercurius.theme.v1",
   tone: "mercurius.tone.v1",
   preferences: "mercurius.preferences.v1",
 } as const;
@@ -211,6 +208,51 @@ function GameLogo() {
   );
 }
 
+const titleLetters = [
+  { left: 0, top: 1.8, width: 103.8, height: 120 },
+  { left: 75.8, top: 27, width: 83.4, height: 94.8 },
+  { left: 151.2, top: 27, width: 85.8, height: 94.8 },
+  { left: 229, top: 0, width: 83.4, height: 121.8 },
+  { left: 304.4, top: 1.2, width: 39.6, height: 120.6 },
+  { left: 336, top: 27, width: 85.8, height: 94.8 },
+  { left: 413.8, top: 27, width: 93, height: 94.8 },
+  { left: 498.8, top: 0, width: 111.6, height: 121.8 },
+  { left: 602.4, top: 1.2, width: 39.6, height: 120.6 },
+  { left: 634, top: 7.2, width: 61.2, height: 61.2 },
+] as const;
+
+function TitleIntro() {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setVisible(false), 3300);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+  return (
+    <div className="title-intro" aria-hidden="true">
+      <div className="title-intro__letters">
+        {titleLetters.map((letter, index) => (
+          <img
+            className="title-intro__letter"
+            key={index}
+            src={`/title-letters/letter-${index}.webp`}
+            alt=""
+            style={{
+              "--letter-left": `${(letter.left / 695.2) * 100}%`,
+              "--letter-top": `${(letter.top / 121.8) * 100}%`,
+              "--letter-width": `${(letter.width / 695.2) * 100}%`,
+              "--letter-height": `${(letter.height / 121.8) * 100}%`,
+              "--letter-delay": `${100 + index * 83}ms`,
+            } as CSSProperties}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Toggle({ value, onChange, label }: { value: boolean; onChange: () => void; label: string }) {
   return (
     <button className="toggle-button" type="button" role="switch" aria-checked={value} aria-label={label} onClick={onChange}>
@@ -224,44 +266,122 @@ interface TouchSpark {
   id: number;
   x: number;
   y: number;
+  dx: number;
+  dy: number;
+  rotation: number;
+  scale: number;
+  lifeMs: number;
+  kind: "bubble" | "sign" | "spark02";
 }
+
+const touchParticleSources: Readonly<Record<TouchSpark["kind"], string>> = {
+  bubble: "/spark-bubble.png",
+  sign: "/spark-mercury-sign.png",
+  spark02: "/ani-spark-02.png",
+};
 
 function TouchFx() {
   const [sparks, setSparks] = useState<TouchSpark[]>([]);
   const nextId = useRef(0);
   const pointerActive = useRef(false);
-  const lastTrigger = useRef(-999);
+  const pointerPosition = useRef({ x: 0, y: 0 });
+  const holdTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    const spawn = (event: PointerEvent) => {
-      const now = performance.now();
-      if (now - lastTrigger.current < 150) return;
-      lastTrigger.current = now;
-      const id = nextId.current++;
-      setSparks((current) => [...current.slice(-10), { id, x: event.clientX, y: event.clientY }]);
-      window.setTimeout(() => setSparks((current) => current.filter((spark) => spark.id !== id)), 900);
+    const stopHold = () => {
+      pointerActive.current = false;
+      if (holdTimer.current !== null) {
+        window.clearInterval(holdTimer.current);
+        holdTimer.current = null;
+      }
     };
-    const onDown = (event: PointerEvent) => { pointerActive.current = true; spawn(event); };
-    const onMove = (event: PointerEvent) => { if (pointerActive.current) spawn(event); };
-    const onUp = () => { pointerActive.current = false; };
+
+    const spawnBurst = () => {
+      if (!pointerActive.current) return;
+      const { x, y } = pointerPosition.current;
+      const particleSystems = [
+        { kind: "spark02", count: 10, startSpeed: 1.1, speedModifier: 1 },
+        { kind: "sign", count: 4, startSpeed: 1.4, speedModifier: .4 },
+        { kind: "bubble", count: 10, startSpeed: 1.4, speedModifier: .6 },
+      ] as const;
+      const pixelsPerUnityUnit = 56;
+      const batch = particleSystems.flatMap(({ kind, count, startSpeed, speedModifier }) =>
+        Array.from({ length: count }, (): TouchSpark => {
+          const angle = Math.random() * Math.PI * 2;
+          const shapeAngle = Math.random() * Math.PI * 2;
+          const shapeRadius = Math.sqrt(Math.random()) * .1 * pixelsPerUnityUnit;
+          const lifeMs = 100 + Math.random() * 300;
+          const distance = startSpeed * speedModifier * (lifeMs / 1000) * pixelsPerUnityUnit;
+          return {
+            id: nextId.current++,
+            x: x + Math.cos(shapeAngle) * shapeRadius,
+            y: y + Math.sin(shapeAngle) * shapeRadius,
+            dx: Math.cos(angle) * distance,
+            dy: Math.sin(angle) * distance,
+            rotation: Math.random() * 45 * (lifeMs / 1000),
+            scale: 1,
+            lifeMs,
+            kind,
+          };
+        }),
+      );
+      const ids = new Set(batch.map((spark) => spark.id));
+      setSparks((current) => [...current.slice(-96), ...batch]);
+      const maxLifeMs = Math.max(...batch.map((spark) => spark.lifeMs));
+      window.setTimeout(() => {
+        setSparks((current) => current.filter((spark) => !ids.has(spark.id)));
+      }, maxLifeMs + 80);
+    };
+
+    const onDown = (event: PointerEvent) => {
+      if (!event.isPrimary) return;
+      stopHold();
+      pointerActive.current = true;
+      pointerPosition.current = { x: event.clientX, y: event.clientY };
+      spawnBurst();
+      holdTimer.current = window.setInterval(spawnBurst, 150);
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!pointerActive.current || !event.isPrimary) return;
+      pointerPosition.current = { x: event.clientX, y: event.clientY };
+    };
+    const onUp = () => stopHold();
     window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerup", onUp, { passive: true });
     window.addEventListener("pointercancel", onUp, { passive: true });
+    window.addEventListener("blur", onUp);
     return () => {
+      stopHold();
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("blur", onUp);
     };
   }, []);
 
   return (
     <div className="touch-fx-layer" aria-hidden="true">
       {sparks.map((spark) => (
-        <span className="touch-spark" key={spark.id} style={{ left: spark.x, top: spark.y }}>
-          <img className="touch-spark__bubble" src="/spark-bubble.png" alt="" />
-          <img className="touch-spark__sign" src="/spark-mercury-sign.png" alt="" />
+        <span
+          className="touch-spark"
+          key={spark.id}
+          style={{
+            left: spark.x,
+            top: spark.y,
+            "--spark-x": `${spark.dx}px`,
+            "--spark-y": `${spark.dy}px`,
+            "--spark-rotation": `${spark.rotation}deg`,
+            "--spark-scale": spark.scale,
+            "--spark-duration": `${spark.lifeMs}ms`,
+          } as CSSProperties}
+        >
+          <img
+            className={`touch-spark__particle touch-spark__${spark.kind}`}
+            src={touchParticleSources[spark.kind]}
+            alt=""
+          />
         </span>
       ))}
     </div>
@@ -271,7 +391,6 @@ function TouchFx() {
 export function App() {
   const [locale, setLocale] = useState<Locale>("zh-Hant");
   const [screen, setScreen] = useState<Screen>("home");
-  const [skin, setSkin] = useState<Skin>(() => readJson(storage.theme, "mercury"));
   const [tone, setTone] = useState<Tone>(() => readJson(storage.tone, "dark"));
   const [hints, setHints] = useState(() =>
     import.meta.env.DEV ? DEV_HINTS : readJson(storage.hints, INITIAL_HINTS),
@@ -299,7 +418,6 @@ export function App() {
   }, []);
   useEffect(() => localStorage.setItem(storage.hints, JSON.stringify(hints)), [hints]);
   useEffect(() => localStorage.setItem(storage.records, JSON.stringify(records)), [records]);
-  useEffect(() => localStorage.setItem(storage.theme, JSON.stringify(skin)), [skin]);
   useEffect(() => localStorage.setItem(storage.tone, JSON.stringify(tone)), [tone]);
   useEffect(() => localStorage.setItem(storage.preferences, JSON.stringify(preferences)), [preferences]);
   useEffect(() => {
@@ -464,10 +582,6 @@ export function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [screen, activeGame, selected, notesMode, activeHint, settingsOpen, autoFilling, showAutoFill]);
 
-  function cycleSkin() {
-    setSkin((current) => skins[(skins.indexOf(current) + 1) % skins.length]);
-  }
-
   function cycleTone() {
     setTone((current) => tones[(tones.indexOf(current) + 1) % tones.length]);
   }
@@ -483,14 +597,14 @@ export function App() {
       </a>
       <div className="topbar__actions">
         <button className="language-button" type="button" onClick={() => setLocale(locale === "zh-Hant" ? "en" : "zh-Hant")}>{locale === "zh-Hant" ? "EN" : "繁中"}</button>
-        <button className="icon-button skin-button" type="button" onClick={cycleSkin} aria-label="Change skin" title={`Skin: ${skin}`}><img src="/icon-skin.png" alt="" /></button>
         <button className="icon-button theme-button" type="button" onClick={cycleTone} aria-label="Change color tone" title={`Tone: ${tone}`}><img src={toneIcons[tone]} alt="" /></button>
       </div>
     </header>
   );
 
   return (
-    <main className="app" data-skin={skin} data-tone={tone}>
+    <main className="app" data-tone={tone}>
+      <TitleIntro />
       <div className="stars" aria-hidden="true" />
       <TouchFx />
       {header}
@@ -589,15 +703,14 @@ export function App() {
             return (
               <div className="hint-backdrop" role="dialog" aria-labelledby="hint-title">
                 <div className="hint-window">
-                  <button className="hint-close" type="button" onClick={() => setActiveHint(null)} aria-label={text.hintClose}>×</button>
-                  <span className="hint-symbol">✦</span>
+                  <div className="hint-meter-mask" aria-hidden="true"><span /></div>
                   <p className="eyebrow">{text.hintGuide}</p>
-                  <h2 id="hint-title">{localizedHint.title}</h2>
+                  <h2 id="hint-title">{localizedHint.title}<span className="hint-symbol" aria-hidden="true">✦</span></h2>
                   <div className="hint-step">
                     <span>{text.hintPage} {hintPage + 1} / {localizedHint.pages.length}</span>
                     <div>{localizedHint.pages.map((_, index) => <i className={index === hintPage ? "is-current" : ""} key={index} />)}</div>
                   </div>
-                  <p className="hint-explanation">{localizedHint.pages[hintPage]}</p>
+                  <p className="hint-explanation" key={hintPage}>{localizedHint.pages[hintPage]}</p>
                   <div className="hint-legend">
                     {activeHint.highlights.some((item) => item.type === "key") && <span><i className="legend-key" />{locale === "zh-Hant" ? "重點格" : "Key cell"}</span>}
                     {activeHint.highlights.some((item) => item.type === "auxiliary") && <span><i className="legend-auxiliary" />{locale === "zh-Hant" ? "候選格" : "Candidate cells"}</span>}

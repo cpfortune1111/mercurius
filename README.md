@@ -2,6 +2,22 @@
 
 Mercurius Sudoku is a web-first remake of the original Unity mobile game.
 
+## Current prototype
+
+Version **0.0.1** — Web/PWA prototype, updated 2026-10-12.
+
+This build includes:
+
+- Responsive Sudoku gameplay for desktop and mobile
+- Easy, Medium, Hard, and Expert puzzles
+- Traditional Chinese and English interfaces
+- Unity-compatible Smart Hint strategies and automatic note cleanup
+- Hint explanation window using the original Mercurius artwork
+- Notes, undo, erase, keyboard shortcuts, auto-fill, and completion ripple
+- Light, Dark, and SuperDark colour modes
+- Player records, settings, touch particle effects, and title animation
+- Development Hint balance set to 9999 for testing
+
 The new edition keeps the strongest parts of the original project—Sudoku rules, puzzle knowledge, smart hint strategies, brand identity, and proven gameplay ideas—while rebuilding the product for the web instead of porting the Unity application screen by screen.
 
 ## Product direction
@@ -9,7 +25,7 @@ The new edition keeps the strongest parts of the original project—Sudoku rules
 - Mobile-first responsive web application
 - Comfortable desktop and tablet experience
 - Offline-capable Progressive Web App
-- Android and iOS packaging through Capacitor after the web version is stable
+- Installable PWA direction without an app-store dependency
 - A teaching-oriented hint system that explains techniques instead of only revealing answers
 - A platform-independent Sudoku engine with automated tests
 
@@ -41,7 +57,7 @@ Requirements: Node.js and pnpm.
 3. Run the test suite with pnpm test:run.
 4. Create a production build with pnpm build.
 
-## Initial technology direction
+## Technology direction
 
 - TypeScript
 - React
@@ -49,9 +65,8 @@ Requirements: Node.js and pnpm.
 - IndexedDB
 - Web Workers
 - PWA
-- Capacitor for Android and iOS packaging
 
-The Sudoku engine must remain independent from React and Capacitor.
+The Sudoku engine remains independent from React and the presentation layer.
 
 ## Source project
 
