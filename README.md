@@ -57,6 +57,10 @@ Requirements: Node.js and pnpm.
 3. Run the test suite with pnpm test:run.
 4. Create a production build with pnpm build.
 
+## GitHub Pages
+
+Pushes to `main` are built and deployed by the GitHub Pages workflow. For the first deployment, open **Settings → Pages** in GitHub and set **Source** to **GitHub Actions**.
+
 ## Technology direction
 
 - TypeScript

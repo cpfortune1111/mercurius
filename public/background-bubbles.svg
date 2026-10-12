@@ -1,48 +1,182 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_圖層_1" data-name="圖層_1" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 640 640">
+  <!-- Generator: Adobe Illustrator 29.2.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 116)  -->
   <defs>
-    <radialGradient id="bubble" cx="34%" cy="28%" r="72%">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".16"/>
-      <stop offset=".52" stop-color="#ffffff" stop-opacity=".035"/>
-      <stop offset=".82" stop-color="#ffffff" stop-opacity=".02"/>
-      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".18"/>
+    <style>
+      .st0 {
+        fill: url(#_未命名漸層_6);
+      }
+
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6, .st7, .st8 {
+        stroke: #fff;
+        stroke-opacity: .2;
+      }
+
+      .st0, .st4 {
+        stroke-width: .8px;
+      }
+
+      .st1 {
+        fill: url(#_未命名漸層_9);
+        stroke-width: 1px;
+      }
+
+      .st2 {
+        fill: url(#_未命名漸層_4);
+        stroke-width: 1.1px;
+      }
+
+      .st9 {
+        fill: url(#_未命名漸層_181);
+      }
+
+      .st3 {
+        fill: url(#_未命名漸層_2);
+      }
+
+      .st3, .st6 {
+        stroke-width: .9px;
+      }
+
+      .st10 {
+        fill: url(#_未命名漸層_182);
+      }
+
+      .st11 {
+        fill: url(#_未命名漸層_18);
+      }
+
+      .st4 {
+        fill: url(#_未命名漸層_7);
+      }
+
+      .st12 {
+        fill: url(#_未命名漸層_14);
+      }
+
+      .st5 {
+        fill: url(#_未命名漸層);
+        stroke-width: 1.2px;
+      }
+
+      .st6 {
+        fill: url(#_未命名漸層_5);
+      }
+
+      .st7 {
+        fill: url(#_未命名漸層_3);
+        stroke-width: 1.3px;
+      }
+
+      .st13 {
+        fill: url(#_未命名漸層_13);
+      }
+
+      .st14 {
+        fill: url(#_未命名漸層_10);
+      }
+
+      .st8 {
+        fill: url(#_未命名漸層_8);
+        stroke-width: 1.4px;
+      }
+    </style>
+    <radialGradient id="_未命名漸層" data-name="未命名漸層" cx="-315.7" cy="680.4" fx="-315.7" fy="680.4" r=".7" gradientTransform="translate(33516 72188) scale(106 -106)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
     </radialGradient>
-    <radialGradient id="glow">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".72"/>
-      <stop offset=".2" stop-color="#e8ffff" stop-opacity=".42"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    <radialGradient id="_未命名漸層_2" data-name="未命名漸層 2" cx="-313.5" cy="680.1" fx="-313.5" fy="680.1" r=".7" gradientTransform="translate(19714 42218) scale(62 -62)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
     </radialGradient>
-    <symbol id="spark" viewBox="0 0 28 28">
-      <polygon fill="#ffffff" points="14,0 15.5,10.3 23.9,4.1 17.7,12.5 28,14 17.7,15.5 23.9,23.9 15.5,17.7 14,28 12.5,17.7 4.1,23.9 10.3,15.5 0,14 10.3,12.5 4.1,4.1 12.5,10.3"/>
-    </symbol>
+    <radialGradient id="_未命名漸層_3" data-name="未命名漸層 3" cx="-316.6" cy="680.5" fx="-316.6" fy="680.5" r=".7" gradientTransform="translate(48603 103519) scale(152 -152)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_4" data-name="未命名漸層 4" cx="-316.4" cy="680.4" fx="-316.4" fy="680.4" r=".7" gradientTransform="translate(44451 95515) scale(140 -140)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_5" data-name="未命名漸層 5" cx="-315" cy="680.3" fx="-315" fy="680.3" r=".7" gradientTransform="translate(27472 58808) scale(86 -86)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_6" data-name="未命名漸層 6" cx="-313.2" cy="680" fx="-313.2" fy="680" r=".7" gradientTransform="translate(18746 39734) scale(58 -58)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_7" data-name="未命名漸層 7" cx="-314.1" cy="680.2" fx="-314.1" fy="680.2" r=".7" gradientTransform="translate(22030 48054) scale(70 -70)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_8" data-name="未命名漸層 8" cx="-316.8" cy="680.5" fx="-316.8" fy="680.5" r=".7" gradientTransform="translate(53479 114805) scale(168 -168)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_9" data-name="未命名漸層 9" cx="-315.8" cy="680.4" fx="-315.8" fy="680.4" r=".7" gradientTransform="translate(35246 75364) scale(110 -110)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".8" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a9fc9" stop-opacity=".2"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_10" data-name="未命名漸層 10" cx="-309.1" cy="679.4" fx="-309.1" fy="679.4" r=".5" gradientTransform="translate(10722 23232) scale(34 -34)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
+      <stop offset=".2" stop-color="#e8ffff" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_13" data-name="未命名漸層 13" cx="-309.6" cy="679.4" fx="-309.6" fy="679.4" r=".5" gradientTransform="translate(11617 24889) scale(36 -36)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
+      <stop offset=".2" stop-color="#e8ffff" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_14" data-name="未命名漸層 14" cx="-304" cy="678.7" fx="-304" fy="678.7" r=".5" gradientTransform="translate(6830 15536) scale(22 -22)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
+      <stop offset=".2" stop-color="#e8ffff" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_18" data-name="未命名漸層 18" cx="86" cy="350" fx="86" fy="350" r="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
+      <stop offset=".2" stop-color="#e8ffff" stop-opacity=".4"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="_未命名漸層_181" data-name="未命名漸層 18" cx="612" cy="214" fx="612" fy="214" r="12" xlink:href="#_未命名漸層_18"/>
+    <radialGradient id="_未命名漸層_182" data-name="未命名漸層 18" cx="620" cy="620" fx="620" fy="620" r="16" xlink:href="#_未命名漸層_18"/>
   </defs>
-
-  <g fill="url(#bubble)" stroke="#ffffff" stroke-opacity=".22">
-    <circle cx="74" cy="94" r="53" stroke-width="1.2"/>
-    <circle cx="286" cy="66" r="31" stroke-width=".9"/>
-    <circle cx="510" cy="122" r="76" stroke-width="1.3"/>
-    <circle cx="180" cy="284" r="70" stroke-width="1.1"/>
-    <circle cx="400" cy="324" r="43" stroke-width=".9"/>
-    <circle cx="592" cy="304" r="29" stroke-width=".8"/>
-    <circle cx="54" cy="458" r="35" stroke-width=".8"/>
-    <circle cx="290" cy="520" r="84" stroke-width="1.35"/>
-    <circle cx="530" cy="548" r="55" stroke-width="1.05"/>
+  <g>
+    <circle class="st5" cx="74" cy="94" r="53"/>
+    <circle class="st3" cx="286" cy="66" r="31"/>
+    <circle class="st7" cx="510" cy="122" r="76"/>
+    <circle class="st2" cx="180" cy="284" r="70"/>
+    <circle class="st6" cx="400" cy="324" r="43"/>
+    <circle class="st0" cx="592" cy="304" r="29"/>
+    <circle class="st4" cx="54" cy="458" r="35"/>
+    <circle class="st8" cx="290" cy="520" r="84"/>
+    <circle class="st1" cx="530" cy="548" r="55"/>
   </g>
-
-  <g fill="url(#glow)">
-    <circle cx="212" cy="134" r="17"/>
-    <circle cx="612" cy="214" r="12"/>
-    <circle cx="86" cy="350" r="15"/>
-    <circle cx="470" cy="430" r="18"/>
-    <circle cx="142" cy="604" r="11"/>
-    <circle cx="620" cy="620" r="16"/>
+  <g>
+    <circle class="st14" cx="212" cy="134" r="17"/>
+    <circle class="st13" cx="470" cy="430" r="18"/>
+    <circle class="st12" cx="142" cy="604" r="11"/>
   </g>
-
-  <g opacity=".58">
-    <use href="#spark" x="61" y="81" width="26" height="26"/>
-    <use href="#spark" x="501" y="109" width="24" height="24"/>
-    <use href="#spark" x="171" y="274" width="20" height="20"/>
-    <use href="#spark" x="393" y="317" width="15" height="15"/>
-    <use href="#spark" x="278" y="506" width="28" height="28"/>
-    <use href="#spark" x="522" y="540" width="18" height="18"/>
+  <g>
+    <polygon class="st11" points="86 335 86.8 348 96.6 339.4 88 349.2 101 350 88 350.8 96.6 360.6 86.8 352 86 365 85.2 352 75.4 360.6 84 350.8 71 350 84 349.2 75.4 339.4 85.2 348 86 335"/>
+    <polygon class="st9" points="612 202 612.7 212.4 620.5 205.5 613.6 213.3 624 214 613.6 214.7 620.5 222.5 612.7 215.6 612 226 611.3 215.6 603.5 222.5 610.4 214.7 600 214 610.4 213.3 603.5 205.5 611.3 212.4 612 202"/>
+    <polygon class="st10" points="620 604 620.9 617.8 631.3 608.7 622.2 619.1 636 620 622.2 620.9 631.3 631.3 620.9 622.2 620 636 619.1 622.2 608.7 631.3 617.8 620.9 604 620 617.8 619.1 608.7 608.7 619.1 617.8 620 604"/>
   </g>
 </svg>

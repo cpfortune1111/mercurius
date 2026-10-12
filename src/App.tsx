@@ -35,16 +35,17 @@ const digits: readonly Digit[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 const DEV_HINTS = 9999;
 const difficulties: readonly Difficulty[] = ["easy", "medium", "hard", "expert"];
 const tones: readonly Tone[] = ["light", "dark", "superdark"];
+const assetPath = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
 const toneIcons: Readonly<Record<Tone, string>> = {
-  light: "/icon-theme.png",
-  dark: "/icon-theme-dark.png",
-  superdark: "/icon-theme-superdark.png",
+  light: assetPath("icon-theme.png"),
+  dark: assetPath("icon-theme-dark.png"),
+  superdark: assetPath("icon-theme-superdark.png"),
 };
 const difficultyIcons: Readonly<Record<Difficulty, string>> = {
-  easy: "/icon-diff-easy.png",
-  medium: "/icon-diff-medium.png",
-  hard: "/icon-diff-hard.png",
-  expert: "/icon-diff-expert.png",
+  easy: assetPath("icon-diff-easy.png"),
+  medium: assetPath("icon-diff-medium.png"),
+  hard: assetPath("icon-diff-hard.png"),
+  expert: assetPath("icon-diff-expert.png"),
 };
 const storage = {
   game: "mercurius.active-game.v1",
@@ -204,7 +205,7 @@ function readRecords(): Records {
 
 function GameLogo() {
   return (
-    <img className="game-logo" src="/mercurius-sudoku-logo.png" alt="Mercurius Sudoku" />
+    <img className="game-logo" src={assetPath("mercurius-sudoku-logo.png")} alt="Mercurius Sudoku" />
   );
 }
 
@@ -237,7 +238,7 @@ function TitleIntro() {
           <img
             className="title-intro__letter"
             key={index}
-            src={`/title-letters/letter-${index}.webp`}
+            src={assetPath(`title-letters/letter-${index}.webp`)}
             alt=""
             style={{
               "--letter-left": `${(letter.left / 695.2) * 100}%`,
@@ -257,7 +258,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: () => vo
   return (
     <button className="toggle-button" type="button" role="switch" aria-checked={value} aria-label={label} onClick={onChange}>
       <span>{value ? "ON" : "OFF"}</span>
-      <img src={value ? "/icon-on.png" : "/icon-off.png"} alt={value ? "On" : "Off"} />
+      <img src={assetPath(value ? "icon-on.png" : "icon-off.png")} alt={value ? "On" : "Off"} />
     </button>
   );
 }
@@ -275,9 +276,9 @@ interface TouchSpark {
 }
 
 const touchParticleSources: Readonly<Record<TouchSpark["kind"], string>> = {
-  bubble: "/spark-bubble.png",
-  sign: "/spark-mercury-sign.png",
-  spark02: "/ani-spark-02.png",
+  bubble: assetPath("spark-bubble.png"),
+  sign: assetPath("spark-mercury-sign.png"),
+  spark02: assetPath("ani-spark-02.png"),
 };
 
 function TouchFx() {
@@ -589,11 +590,11 @@ export function App() {
   const header = (
     <header className="topbar">
       <div className="topbar__left">
-        <button className="topbar__settings" type="button" onClick={() => setSettingsOpen(true)} aria-label={text.settings} title={text.settings}><img src="/icon-settings.png" alt="" /></button>
-        <button className="icon-button records-button" type="button" onClick={() => setScreen("records")} aria-label={text.records} title={text.records}><img src="/icon-records.png" alt="" /></button>
+        <button className="topbar__settings" type="button" onClick={() => setSettingsOpen(true)} aria-label={text.settings} title={text.settings}><img src={assetPath("icon-settings.png")} alt="" /></button>
+        <button className="icon-button records-button" type="button" onClick={() => setScreen("records")} aria-label={text.records} title={text.records}><img src={assetPath("icon-records.png")} alt="" /></button>
       </div>
       <a className="studio-link" href="https://tsukinoaiplus.com" target="_blank" rel="noreferrer" aria-label="Tsukino Ai Plus website">
-        <img src="/tsukinoaiplus-logo.png" alt="Tsukino Ai Plus" />
+        <img src={assetPath("tsukinoaiplus-logo.png")} alt="Tsukino Ai Plus" />
       </a>
       <div className="topbar__actions">
         <button className="language-button" type="button" onClick={() => setLocale(locale === "zh-Hant" ? "en" : "zh-Hant")}>{locale === "zh-Hant" ? "EN" : "繁中"}</button>
@@ -603,7 +604,7 @@ export function App() {
   );
 
   return (
-    <main className="app" data-tone={tone}>
+    <main className="app" data-tone={tone} data-screen={screen} data-locale={locale}>
       <TitleIntro />
       <div className="stars" aria-hidden="true" />
       <TouchFx />
@@ -682,10 +683,10 @@ export function App() {
                 </button>
               ) : (
                 <div className="tool-row">
-                  <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span><img src="/icon-refresh.png" alt="" /></span>{text.undo}</button>
-                  <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span><img src="/icon-eraser.png" alt="" /></span>{text.erase}</button>
-                  <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span><img src="/icon-notes.png" alt="" /></span>{text.notes}</button>
-                  <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon"><img src="/icon-hint.png" alt="" /><em>{hints}</em></span>{text.hint}</button>
+                  <button type="button" aria-keyshortcuts="Backspace" onClick={() => commitGame(undo(activeGame.state))}><span><img src={assetPath("icon-refresh.png")} alt="" /></span>{text.undo}</button>
+                  <button type="button" aria-keyshortcuts="Delete" onClick={() => selected !== null && commitGame(eraseCell(activeGame.state, selected))}><span><img src={assetPath("icon-eraser.png")} alt="" /></span>{text.erase}</button>
+                  <button className={notesMode ? "is-active" : ""} type="button" aria-keyshortcuts="N" onClick={() => setNotesMode((value) => !value)}><span className="notes-tool-icon"><img src={assetPath("icon-notes.png")} alt="" /><em className={notesMode ? "is-on" : "is-off"}>{notesMode ? "ON" : "OFF"}</em></span>{text.notes}</button>
+                  <button type="button" aria-keyshortcuts="H" onClick={useHint} disabled={hints < HINT_COST}><span className="hint-tool-icon"><img src={assetPath("icon-hint.png")} alt="" /><em>{hints}</em></span>{text.hint}</button>
                 </div>
               )}
               <div className="number-pad">{digits.map((digit) => <button disabled={autoFilling || activeGame.state.completed} className={preferences.hideNumberButtons && completedDigits.has(digit) ? "number-pad__hidden" : ""} type="button" key={digit} onClick={() => enterDigit(digit)}>{digit}</button>)}</div>
@@ -754,7 +755,7 @@ export function App() {
             <button className="settings-close" type="button" onClick={() => setSettingsOpen(false)} aria-label="Close">×</button>
             <h2>{text.settings}</h2>
             <div className="sound-master">
-              <span className="sound-master__title"><strong>{text.sound}</strong><img src="/icon-music.png" alt="" /></span>
+              <span className="sound-master__title"><strong>{text.sound}</strong><img src={assetPath("icon-music.png")} alt="" /></span>
               <Toggle value={preferences.sound} label={text.sound} onChange={() => setPreferences((current) => ({ ...current, sound: !current.sound }))} />
             </div>
             <div className={`volume-controls ${preferences.sound ? "" : "is-disabled"}`}>
