@@ -43,7 +43,7 @@ button:focus-visible { outline: 3px solid #f7cf68; outline-offset: 3px; }
   --puzzle-clue-text: #404040;
   --puzzle-placed-text: #336e80;
   --puzzle-hint-text: #0092bf;
-  --puzzle-incorrect-text: #e62887;
+  --puzzle-incorrect-text: #0092bf;
   --puzzle-grid-line: #999;
   --puzzle-border-line: #404040;
   --puzzle-note-text: #404040;
